@@ -2,8 +2,10 @@
   (:require [clojure.test :refer :all]
             [xatis.render :refer :all]))
 
+(def metar-data
+  "09005G10KT 10SM BKN090 BKN140 BKN250 26/19 A3003")
 (def metar
-  "KLGA 311251Z 09005G10KT 10SM BKN090 BKN140 BKN250 26/19 A3003")
+  (str "KLGA 311251Z " metar-data))
 
 (def config
   {:id "KLGA"
@@ -19,7 +21,7 @@
    :magnetic-degrees "10", :ctc-position nil,
    :visual-approach false, :rnav-approach false,
    :hold-short-intructions true, :land-hold-short false,
-   :verify-sid false, :normal-update true, :notam "BOGUS NOTAM",
+   :verify-sid false, :normal-update true, :notam "BOGUS NOTICE.",
    :vor-approach false, :departing-rwys nil,
    :vfr-direction false, :simul-approach-intersecting false,
    :dme-approach false, :ils-approach true,
@@ -58,7 +60,7 @@
              (nth parts 1)))
       (is (= "NOTAMS"
              (nth parts 2)))
-      (is (= "BOGUS NOTAM"
+      (is (= "BOGUS NOTICE."
              (nth parts 3)))))
   (testing "ILS *and* Visual"
     (let [result (render-atis config 

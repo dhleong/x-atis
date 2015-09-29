@@ -99,7 +99,7 @@
      (assoc
        config
        :info nato-letter)
-     :metar (subs metar (inc (.indexOf metar " ")))
+     :metar (subs metar (inc (.indexOf metar " " 5)))
      :weather decoded
      :parts
      (->> atis-parts

@@ -60,15 +60,34 @@
      :visual-approach #(when-not (get % :ils-approach)
                          ;; ils got it
                          "VISUAL APPROACHES IN USE.")
-     :simul-approachs "SIMUL APPS ARE IN PROG."
+     ;; TODO in fact, there's also RNAV, VOR, Localizer, and DME,
+     ;;  and they probably all should combine together
      :dep-arr-notice identity
      :arriving-rwys #(render-runways "LDG" (:arriving-rwys %))
      :departing-rwys #(render-runways "DEPTG" (:departing-rwys %))
+     :simul-approach-intersecting 
+     "SIMUL APCHS TO PARALLEL AND INTERSECTING RWYS ARE IN USE."
+     ;; TODO :converging-ops
+     :land-hold-short "LAND AND HOLD SHORT OPERATIONS ARE IN EFFECT."
+     :simul-approachs "SIMUL APCHS ARE IN USE."
+     ;; TODO :grass-ops
+     ;; TODO :windshear-advs
+     :vfr-direction "VFR ACFT SAY DRCTN OF FLT."
      :notam #(vec ["NOTAMS" (:notam %)])
      :hazardous-weather #(str "ATTN ALL ACFT, HAZ WX INFO FOR "
                               (:hazardous-weather-area %)
                               " AREA AVBL FROM ATC BY REQUEST.")
      :hold-short-intructions "READBACK ALL RWY HS INSTRUCTIONS."
+     :readback-assigned-alt 
+     "READBACK ALL RWY HS INSTRUCTIONS AND ASSIGNED ALTS."
+     :deps-ctc-freq #(str "ALL DEPS CTC "
+                          (:ctc-position %)
+                          " ON "
+                          (:ctc-freq %)
+                          " PRIOR TO TAXI.")
+     ;; TODO :readback-callsign
+     :verify-sid 
+     "VFY YOUR ASSIGNED SID WITH CLNC DELIVERY WHEN READY TO PUSH AND TAXI."
      :mode-charlie "OPER XPNDR ON MODE CHARLIE ON ALL TWYS AND RWYS."]))
 
 (defn render-winds

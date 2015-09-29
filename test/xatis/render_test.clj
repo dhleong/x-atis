@@ -90,4 +90,14 @@
                                 metar "a"))]
       (is (= (str "ATTN ALL ACFT, HAZ WX INFO FOR "
                   "New York AREA AVBL FROM ATC BY REQUEST.")
+             (nth parts 0)))))
+  (testing "Contact prior"
+    (let [parts (:parts
+                   (render-atis config 
+                                {:deps-ctc-freq true
+                                 :ctc-position "LOS ANGELES GROUND"
+                                 :ctc-freq "121.650"}
+                                metar "a"))]
+      (is (= (str "ALL DEPS CTC LOS ANGELES GROUND "
+                  "ON 121.650 PRIOR TO TAXI.")
              (nth parts 0))))))

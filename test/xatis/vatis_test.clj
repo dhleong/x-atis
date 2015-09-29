@@ -14,6 +14,8 @@
     <Profile>
       <Name>L ILS 22 D 31</Name>
       <DepArrNotice>ARRS EXPT ILS RWY 22 APPR. DEPS EXPT RWY 31.</DepArrNotice>
+      <ILSApch>true</ILSApch>
+      <RNAVApch>false</RNAVApch>
     </Profile>
   </Profiles>
 </Facility>")
@@ -39,4 +41,6 @@
       (is (= "rw.liveatc.net" (:server result)))
       (is (= "127.050" (:frequency result)))
       (is (= 1 (count profiles)))
-      (is (= "L ILS 22 D 31" (:name (first profiles)))))))
+      (is (= "L ILS 22 D 31" (:name (first profiles))))
+      (is (= true (:ils-approach (first profiles))))
+      (is (= false (:rnav-approach (first profiles)))))))

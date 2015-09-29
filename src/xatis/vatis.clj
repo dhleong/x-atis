@@ -41,6 +41,13 @@
                 cleaned)]
     (keyword fixed)))
 
+(defn resolve-value
+  [raw-value]
+  (cond
+    (= "false" raw-value) false
+    (= "true" raw-value) true
+    :else raw-value))
+
 (defn- profile-to-map
   [profile]
   (let [node (zip/node profile)]
@@ -49,7 +56,7 @@
          (mapcat 
            (fn [v] 
              [(resolve-keyword (:tag v))
-              (first (:content v))]))
+              (-> v :content first resolve-value)]))
          (apply hash-map))))
 
 (defn read-stream
@@ -87,3 +94,4 @@
   (read-stream
     (ByteArrayInputStream. 
       (.getBytes string))))
+

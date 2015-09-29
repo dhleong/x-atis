@@ -1,8 +1,9 @@
 (ns ^{:author "Daniel Leong"
       :doc "Render an ATIS profile to text"}
   xatis.render
-  (:require [clojure.string :refer [upper-case]]
-            [clj-time.core :as t]))
+  (:require [clojure.string :refer [join split upper-case] :as s]
+            [clj-time.core :as t]
+            [asfiled.metar :refer [decode-metar]]))
 
 (def nato
   {\A "Alpha"   \B "Bravo"    \C "Charlie" \D "Delta"
@@ -20,10 +21,50 @@
   ;;  off with maths, but... laziness
   (let [fmt (if min-length
               (str "%0" min-length "d")
-              "%s")]
-    (->> (int number) ;; make sure it's a number
+              "%s")
+        the-num (if (string? number)
+                  (Integer/parseInt number)
+                  number)]
+    (->> (int the-num) ;; make sure it's a number
          (format fmt)
          (map #(- (int %) (int \0))))))
+
+(defn render-runways
+  [label config]
+  (let [runways (split config #"[, :|;]")
+        rwy-or-rwys (if (= 1 (count runways))
+               "RWY"
+               "RWYS")
+        last-rwy (last runways)]
+    (cons
+      (str label " " rwy-or-rwys " ") 
+      (rest ;; drop the redundant first separator
+        (mapcat
+          (fn [rwy]
+            (let [n (s/replace rwy #"[^0-9]" "")
+                  extra (.replace rwy n "")
+                  sep (if (= rwy last-rwy)
+                        ", AND "
+                        ", ")]
+              (if (.isEmpty extra)
+                [sep (read-number n)]
+                [sep (read-number n) extra])))
+          runways)))))
+
+(def atis-parts
+  (partition
+    2
+    [:ils-approach #(if (get % :visual-approach)
+                      "VISUAL, AND ILS APPROACHES IN USE."
+                      "ILS APPROACHES IN USE.")
+     :visual-approach #(when-not (get % :ils-approach)
+                         ;; ils got it
+                         "VISUAL APPROACHES IN USE.")
+     :simul-approachs "SIMUL APPS ARE IN PROG."
+     :dep-arr-notice identity
+     :arriving-rwys #(render-runways "LDG" (:arriving-rwys %))
+     :departing-rwys #(render-runways "DEPTG" (:departing-rwys %))
+     :notam #(vec ["NOTAMS" (:notam %)])]))
 
 (defn render-winds
   [metar]
@@ -48,17 +89,30 @@
   - Numbers should be read out as the normal, english reading.
   - Vectors of numbers should be read out individually, and
   rendered to text separated by whitespace
-  `metar` should be the decoded METAR"
+  `metar` should be the raw METAR"
   [config profile metar information-letter]
   (let [letter (first (upper-case information-letter))
+        decoded (decode-metar metar)
         nato-letter (get nato letter letter)
         zulu (:time metar)]
-    (concat
-      [(:facility config)
-       (str "Airport Information " nato-letter ".")
-       (concat (read-number (t/hour zulu)) 
-               (read-number (t/minute zulu)))
-       \Z
-       "Winds"]
-      (render-winds metar)
-      ".")))
+    {:meta
+     (assoc
+       config
+       :info nato-letter)
+     :metar (subs metar (inc (.indexOf metar " ")))
+     :weather decoded
+     :parts
+     (->> atis-parts
+          (mapcat
+            (fn [[k v]] 
+              (when (get profile k)
+                (let [parsed 
+                      (cond
+                        (string? v) v
+                        (= identity v) (k profile)
+                        :else (v profile))]
+                  (if (and (seq parsed)
+                           (not (string? parsed)))
+                    parsed
+                    [parsed])))))
+          (filter identity))}))

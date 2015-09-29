@@ -15,5 +15,7 @@
                 rt/metar-data
                 " (THREE ZERO ZERO THREE). ILS APPROACHES IN USE. "
                 "ARRS EXPT ILS RWY 22 APPR. DEPS EXPT RWY 31. "
-                "NOTAMS BOGUS NOTICE. ADVS YOU HAVE INFO A.")
+                "NOTICES TO AIRMEN; BOGUS NOTICE. "
+                "READBACK ALL RWY HS INSTRUCTIONS. "
+                "ADVS YOU HAVE INFO A.")
            (build-text rendered-atis)))))

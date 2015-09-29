@@ -64,7 +64,12 @@
      :dep-arr-notice identity
      :arriving-rwys #(render-runways "LDG" (:arriving-rwys %))
      :departing-rwys #(render-runways "DEPTG" (:departing-rwys %))
-     :notam #(vec ["NOTAMS" (:notam %)])]))
+     :notam #(vec ["NOTAMS" (:notam %)])
+     :hazardous-weather #(str "ATTN ALL ACFT, HAZ WX INFO FOR "
+                              (:hazardous-weather-area %)
+                              " AREA AVBL FROM ATC BY REQUEST.")
+     :hold-short-intructions "READBACK ALL RWY HS INSTRUCTIONS."
+     :mode-charlie "OPER XPNDR ON MODE CHARLIE ON ALL TWYS AND RWYS."]))
 
 (defn render-winds
   [metar]

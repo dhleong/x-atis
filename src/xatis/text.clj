@@ -17,7 +17,8 @@
   (join part))
 (defmethod build-part :default
   [part]
-  part)
+  (-> part
+      (s/replace #"^NOTAMS" "NOTICES TO AIRMEN;")))
 
 (defn build-text
   "Given a rendered ATIS, build the text atis as a String"

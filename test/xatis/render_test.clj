@@ -81,4 +81,13 @@
       (is (= "LDG RWY " (nth parts 0)))
       (is (= [4] (nth parts 1)))
       (is (= "DEPTG RWY " (nth parts 2)))
-      (is (= [1 1] (nth parts 3))))))
+      (is (= [1 1] (nth parts 3)))))
+  (testing "Hazardous Weather"
+    (let [parts (:parts
+                   (render-atis config 
+                                {:hazardous-weather true
+                                 :hazardous-weather-area "New York"}
+                                metar "a"))]
+      (is (= (str "ATTN ALL ACFT, HAZ WX INFO FOR "
+                  "New York AREA AVBL FROM ATC BY REQUEST.")
+             (nth parts 0))))))

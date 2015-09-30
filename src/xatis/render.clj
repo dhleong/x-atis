@@ -70,8 +70,8 @@
      :converging-ops "CONVERGING RWY OPS IN EFFECT."
      :land-hold-short "LAND AND HOLD SHORT OPERATIONS ARE IN EFFECT."
      :simul-approachs "SIMUL APCHS ARE IN USE."
-     ;; TODO :grass-ops
-     ;; TODO :windshear-advs
+     :grass-ops "GRASS RWY OPS IN EFFECT." ;; I guess?
+     :windshear-advs "LLWS ADVZYS IN EFFECT." ;; I guess?
      :vfr-direction "VFR ACFT SAY DRCTN OF FLT."
      :notam #(vec ["NOTAMS" (:notam %)])
      :hazardous-weather #(str "ATTN ALL ACFT, HAZ WX INFO FOR "
@@ -85,7 +85,9 @@
                           " ON "
                           (:ctc-freq %)
                           " PRIOR TO TAXI.")
-     ;; TODO :readback-callsign
+     :readback-callsign 
+     (str "UPON RECEIPT OF YOUR ATC CLNC READBACK ONLY YOUR CALLSIGN "
+          "AND XPNDR CODE UNLESS YOU HAVE A QUESTION.") ;; I guess?
      :verify-sid 
      "VFY YOUR ASSIGNED SID WITH CLNC DELIVERY WHEN READY TO PUSH AND TAXI."
      :mode-charlie "OPER XPNDR ON MODE CHARLIE ON ALL TWYS AND RWYS."]))

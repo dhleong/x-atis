@@ -184,7 +184,7 @@
          ;; weather
          "WIND " (join " " (flatten (render-winds wx))) ". "
          "VISIBILITY " (string-read-number (:visibility wx)) ". "
-         (render-precipitation wx)
+         (build-precipitation wx)
          (let [clouds (build-clouds wx)]
            (when-not (empty? clouds)
              (str clouds " ")))

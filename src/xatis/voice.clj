@@ -43,15 +43,19 @@
         ten-thousands? (>= number 10000)
         rest-num (if ten-thousands?
                    (Integer/parseInt (subs as-str 1))
-                   number)]
-    (str 
-      (when ten-thousands?
-        (str (-> as-str
-                 (subs 0 1)
-                 render-numbers
-                 first)
-             " "))
-      rest-num)))
+                   number)
+        rest-small? (< rest-num 1000)]
+    (trim
+      (str 
+        (when ten-thousands?
+          (str (-> as-str
+                   (subs 0 1)
+                   render-numbers
+                   first)))
+        (when rest-small?
+          " ZERO THOUSAND")
+        (when (> rest-num 0)
+          (str " " rest-num))))))
 
 (defn render-winds
   [metar]

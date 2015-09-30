@@ -92,7 +92,3 @@
            (build-weather
              "KLGA 301251Z 220V03014KT 4SM R04R/5500VP6000FT -RA BR
              FEW015 SCT026 BKN044 OVC250 24/22 A2966")))))
-
-(def blabla
-  (str "light rain mist; few clouds a 1500; ceiling 4400 broken"
-       "rwy 4r rvr 5500 variable to greater than 6000"))

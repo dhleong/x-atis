@@ -92,20 +92,6 @@
      "VFY YOUR ASSIGNED SID WITH CLNC DELIVERY WHEN READY TO PUSH AND TAXI."
      :mode-charlie "OPER XPNDR ON MODE CHARLIE ON ALL TWYS AND RWYS."]))
 
-(defn render-winds
-  [metar]
-  (let [wind (:wind metar)
-        vrb? (= :vrb (:dir wind))
-        base 
-        [(if vrb?
-           "VRB"
-           (read-number (:dir wind) 3))
-         "At"
-         (read-number (:speed wind))]]
-    (if-let [gust (:gust wind)]
-      (concat base ["Gust" (read-number gust)])
-      base)))
-
 (defn render-atis
   "Renders the atis to a vector of parts, from which
   the text-atis and voice-atis can be more easily generated.

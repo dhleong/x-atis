@@ -5,13 +5,10 @@
             [clj-time.core :as t]
             [xatis
              [render :refer [read-number]]
+             [util :refer [typed-dispatch-fn]]
              [voice :refer [render-numbers]] ]))
 
-(defmulti build-part (fn [a]
-                       (cond
-                         (vector? a) :vector
-                         (string? a) :string
-                         :else :default)))
+(defmulti build-part typed-dispatch-fn)
 (defmethod build-part :vector
   [part]
   (join part))

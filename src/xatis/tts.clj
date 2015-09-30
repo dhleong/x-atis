@@ -13,6 +13,9 @@
 (def replacements
   (->>
     ["ILS" "I L S"
+     "RVR" "R V R"
+     "VOR" "V O R"
+     "DME" "D M E"
      "READBACK" "REED BACK"] ;; otherwise it sounds like RED BACK
     (partition 2)
     (map 

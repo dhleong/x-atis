@@ -67,7 +67,7 @@
      :departing-rwys #(render-runways "DEPTG" (:departing-rwys %))
      :simul-approach-intersecting 
      "SIMUL APCHS TO PARALLEL AND INTERSECTING RWYS ARE IN USE."
-     ;; TODO :converging-ops
+     :converging-ops "CONVERGING RWY OPS IN EFFECT."
      :land-hold-short "LAND AND HOLD SHORT OPERATIONS ARE IN EFFECT."
      :simul-approachs "SIMUL APCHS ARE IN USE."
      ;; TODO :grass-ops

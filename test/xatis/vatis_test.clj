@@ -34,7 +34,7 @@
 
 (deftest read-vatis-test
   (testing "Read partial vatis from string"
-    (let [result (read-string partial-data)
+    (let [result (read-vatis-string partial-data)
           profiles (:profiles result)]
       (is (= "KLGA" (:id result)))
       (is (= "LaGuardia" (:facility result)))

@@ -4,5 +4,5 @@
 
 (deftest abbreviations-test
   (testing "Abbreviations expansion"
-    (is (= "NOTICES TO AIRMEN"
+    (is (= "NOTICES TO AIRMEN:"
           (expand-abbrs "NOTAMS")))))

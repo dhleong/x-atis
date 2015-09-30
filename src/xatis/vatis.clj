@@ -89,7 +89,7 @@
       (read-stream
         (io/input-stream gz-file)))))
 
-(defn read-string
+(defn read-vatis-string
   [string]
   (read-stream
     (ByteArrayInputStream. 

@@ -58,10 +58,12 @@
       (is (= "ILS APPROACHES IN USE." (nth parts 0)))
       (is (= "ARRS EXPT ILS RWY 22 APPR. DEPS EXPT RWY 31."
              (nth parts 1)))
-      (is (= "NOTAMS"
+      (is (= "CONVERGING RWY OPS IN EFFECT."
              (nth parts 2)))
+      (is (= "NOTAMS"
+             (nth parts 3)))
       (is (= "BOGUS NOTICE."
-             (nth parts 3)))))
+             (nth parts 4)))))
   (testing "ILS *and* Visual"
     (let [result (render-atis config 
                              {:visual-approach true

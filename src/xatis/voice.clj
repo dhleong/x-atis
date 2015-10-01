@@ -6,7 +6,7 @@
             [clj-time.core :as t]
             [xatis
              [abbr :refer [expand-abbrs]]
-             [render :refer [read-number]]
+             [render :refer [nato read-number]]
              [util :refer [re-replace typed-dispatch-fn]]]))
 
 (def numbers-to-text
@@ -104,6 +104,23 @@
       (concat base ["GUST" (render-read-number gust)])
       base)))
 
+(defn expand-taxiways
+  "Expands strings that are obviously runways
+  (such as 22R or 04C)"
+  [text]
+  (->> text
+       (re-replace 
+         #"%([A-Z]{1,2})([0-9]*)\b" 
+         #(let [letters (second %)
+                nato-letters (join " " (map nato letters))
+                number (last %)]
+            (if (empty? number)
+              nato-letters
+              (str
+                nato-letters
+                " "
+                (read-long-number (Integer/parseInt number))))))))
+
 (defn expand-runways
   "Expands strings that are obviously runways
   (such as 22R or 04C)"
@@ -186,7 +203,9 @@
   [part]
   (-> part
       expand-runways
+      expand-taxiways
       expand-abbrs
+      expand-frequencies
       expand-numbers))
 
 (defmulti build-rvr typed-dispatch-fn)

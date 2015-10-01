@@ -30,6 +30,15 @@
   (testing "DON'T expand random numbers"
     (is (= "2200" (expand-runways "2200")))))
 
+(deftest expand-taxiways-test
+  (testing "Letters only"
+    (is (= "TWY Echo" (expand-taxiways "TWY %E")))
+    (is (= "TWY Zulu Alpha" (expand-taxiways "TWY %ZA"))))
+  (testing "Letters and Numbers"
+    (is (= "TWY Echo SIX" (expand-taxiways "TWY %E6")))
+    (is (= "TWY Echo SIXTEEN" (expand-taxiways "TWY %E16")))
+    (is (= "TWY Echo Echo TWENTY ONE" (expand-taxiways "TWY %EE21")))))
+
 (deftest expand-frequencies-test
   (testing "Expand Full frequency"
     (is (= "ONE TWO ONE POINT NINER SEVEN FIVE"

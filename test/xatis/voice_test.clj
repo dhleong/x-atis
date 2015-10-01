@@ -30,6 +30,24 @@
   (testing "DON'T expand random numbers"
     (is (= "2200" (expand-runways "2200")))))
 
+(deftest expand-frequencies-test
+  (testing "Expand Full frequency"
+    (is (= "ONE TWO ONE POINT NINER SEVEN FIVE"
+           (expand-frequencies "121.975")))))
+
+(deftest expand-numbers-test
+  (testing "Non-prefixed numbers"
+    (is (= "TWO FOUR SIX" 
+           (expand-numbers "246"))))
+  (testing "Prefixed numbers are expanded via read-long"
+    (is (= "TWO HUNDRED FOURTY SIX" 
+           (expand-numbers "#246"))))
+  (testing "All together now"
+    (is (= "TWO FOUR SIX TWO HUNDRED FOURTY SIX" 
+           (expand-numbers "246 #246")))
+    (is (= "TWO HUNDRED FOURTY SIX TWO FOUR SIX" 
+           (expand-numbers "#246 246")))))
+
 (deftest read-long-number-test
   (testing "Small numbers"
     (is (= "ZERO" (read-long-number 0)))
@@ -86,24 +104,26 @@
              "TEMPERATURE TWO SIX, DEWPOINT ONE NINER. "
              "ALTIMETER THREE ZERO ZERO THREE. "
              "ILS APPROACHES IN USE. "
-             "ARRIVALS EXPECT ILS RUNWAY  2 2 APPROACH. "
-             "DEPARTURES EXPECT RUNWAY  3 1. "
+             "ARRIVALS EXPECT ILS RUNWAY TWO TWO APPROACH. "
+             "DEPARTURES EXPECT RUNWAY THREE ONE. "
              "CONVERGING RUNWAY OPERATIONS IN EFFECT. "
              "NOTICES TO AIRMEN: BOGUS NOTICE. "
              "READBACK ALL RUNWAY HOLD SHORT INSTRUCTIONS. "
              "Advise on initial contact you have information Alpha.")
-           (build-voice rendered-atis))))
+           (build-voice rendered-atis)))))
+
+(deftest voice-weather-tests
   (testing "No Ceiling"
-    (is (= (str
-             "LaGuardia Airport Information Alpha. "
-             "ONE TWO FIVE ONE ZULU. "
-             "WIND ZERO ONE ZERO AT FOUR. "
-             "VISIBILITY FOUR. "
-             "TEMPERATURE TWO FOUR, DEWPOINT TWO TWO. "
-             "ALTIMETER TWO NINER SIX SIX. "
-             "Advise on initial contact you have information Alpha.")
-           (build-weather
-             "KLGA 301251Z 01004KT 4SM 24/22 A2966"))))
+   (is (= (str
+            "LaGuardia Airport Information Alpha. "
+            "ONE TWO FIVE ONE ZULU. "
+            "WIND ZERO ONE ZERO AT FOUR. "
+            "VISIBILITY FOUR. "
+            "TEMPERATURE TWO FOUR, DEWPOINT TWO TWO. "
+            "ALTIMETER TWO NINER SIX SIX. "
+            "Advise on initial contact you have information Alpha.")
+          (build-weather
+            "KLGA 301251Z 01004KT 4SM 24/22 A2966")))))
   (testing "Fancy Weather"
     (is (= (str
              "LaGuardia Airport Information Alpha. "
@@ -121,4 +141,4 @@
              "Advise on initial contact you have information Alpha.")
            (build-weather
              "KLGA 301251Z 220V03014KT 4SM R04R/5500VP6000FT -RA BR
-             FEW015 SCT026 BKN044 OVC250 24/22 A2966")))))
+             FEW015 SCT026 BKN044 OVC250 24/22 A2966"))))

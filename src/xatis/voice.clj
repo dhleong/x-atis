@@ -7,7 +7,7 @@
             [xatis
              [abbr :refer [expand-abbrs]]
              [render :refer [read-number]]
-             [util :refer [typed-dispatch-fn]]]))
+             [util :refer [re-replace typed-dispatch-fn]]]))
 
 (def numbers-to-text
   {\0 "ZERO" \1 "ONE" \2 "TWO" \3 "THREE"
@@ -108,27 +108,46 @@
   "Expands strings that are obviously runways
   (such as 22R or 04C)"
   [text]
-  (let [m (re-matcher #"\b[0-9]{1,2}[CLR]\b" text)]
-    (if-let [runway (re-find m)]
-      (let [part-start (dec (count runway))
-            part (subs runway part-start)
-            number (Integer/parseInt
-                     (subs runway 0 part-start))]
-        (recur (.replaceFirst
-                 m 
-                 (trim
-                   (str
-                     (string-read-number number)
-                     (case part
-                       "C" " CENTER"
-                       "L" " LEFT"
-                       "R" " RIGHT"))))))
-      ;; nothing more to do here
-      text)))
+  (->> text
+       (re-replace 
+         #"\b[0-9]{1,2}[CLR]\b" 
+         #(let [runway %
+                part-start (dec (count runway))
+                part (subs runway part-start)
+                number (Integer/parseInt
+                         (subs runway 0 part-start))]
+            (trim
+              (str
+                (string-read-number number)
+                (case part
+                  "C" " CENTER"
+                  "L" " LEFT"
+                  "R" " RIGHT")))))))
+
+(defn expand-frequencies
+  "Expand frequencies. MUST be all six digits"
+  [text]
+  (->> text
+       (re-replace
+         #"\b[0-9]{3}\.[0-9]{3}\b"
+         #(str
+            (string-read-number
+              (Integer/parseInt
+                (subs % 0 3)))
+            " POINT "
+            (string-read-number
+              (Integer/parseInt
+                (subs % 4)))))))
 
 (defn expand-numbers
   [text]
-  (s/replace text #"([0-9])" " $1"))
+  (->> text
+       (re-replace
+         #"#[0-9]+\b" 
+         #(read-long-number (Integer/parseInt (subs % 1))))
+       (re-replace
+         #"\b[0-9]+\b"
+         #(string-read-number (Integer/parseInt %)))))
 
 (defn build-clouds
   [wx]

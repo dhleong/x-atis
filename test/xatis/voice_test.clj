@@ -1,5 +1,6 @@
 (ns xatis.voice-test
   (:require [clojure.test :refer :all]
+            [asfiled.skyvector :refer [get-vor]]
             [xatis
              [render :as r]
              [render-test :as rt]
@@ -17,6 +18,11 @@
       {} 
       weather
       "a")))
+
+(defmacro expand-navaids-with
+  [get-vor-result text]
+  `(with-redefs-fn {#'get-vor (constantly ~get-vor-result)}
+     #(expand-airports-navaids ~text)))
 
 ;;
 ;; Tests
@@ -38,6 +44,26 @@
     (is (= "TWY Echo SIX" (expand-taxiways "TWY %E6")))
     (is (= "TWY Echo SIXTEEN" (expand-taxiways "TWY %E16")))
     (is (= "TWY Echo Echo TWENTY ONE" (expand-taxiways "TWY %EE21")))))
+
+(deftest expand-navaids-test
+  (testing "Known Airport"
+    ;; terrible hacks to avoid brittleness 
+    ;;  inherent with network calls
+    (is (= "Kennedy AIRPORT" (expand-navaids-with
+                               {:name "Kennedy"}
+                               "@KJFK")))
+    (is (= "GILA BEND" (expand-navaids-with
+                               {:name "GILA BEND"}
+                               "*GBN"))))
+  (testing "Fallback gracefully"
+    ;; terrible hacks to avoid brittleness 
+    ;;  inherent with network calls
+    (is (= "Kilo Juliett Foxtrot Kilo AIRPORT" (expand-navaids-with
+                                                 {:name nil}
+                                                 "@KJFK")))
+    (is (= "Golf Bravo November" (expand-navaids-with
+                                   {:name nil}
+                                   "*GBN")))))
 
 (deftest expand-frequencies-test
   (testing "Expand Full frequency"

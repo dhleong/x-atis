@@ -4,6 +4,7 @@
   xatis.voice
   (:require [clojure.string :refer [join split trim upper-case] :as s]
             [clj-time.core :as t]
+            [asfiled.skyvector :refer [get-vor]]
             [xatis
              [abbr :refer [expand-abbrs]]
              [render :refer [nato read-number]]
@@ -104,6 +105,10 @@
       (concat base ["GUST" (render-read-number gust)])
       base)))
 
+(defn render-letters
+  [letters]
+  (join " " (map nato letters)))
+
 (defn expand-taxiways
   "Expands strings that are obviously runways
   (such as 22R or 04C)"
@@ -112,7 +117,7 @@
        (re-replace 
          #"%([A-Z]{1,2})([0-9]*)\b" 
          #(let [letters (second %)
-                nato-letters (join " " (map nato letters))
+                nato-letters (render-letters letters)
                 number (last %)]
             (if (empty? number)
               nato-letters
@@ -140,6 +145,26 @@
                   "C" " CENTER"
                   "L" " LEFT"
                   "R" " RIGHT")))))))
+
+(defn expand-airports-navaids
+  [text]
+  (->> text
+       (re-replace
+         #"(@[A-Z]{3,4}|\*[A-Z]{3})\b"
+         #(let [match (first %)
+                kind (if (= \@ (first match))
+                       :airport
+                       :navaid)
+                icao (subs match 1)
+                data (get-vor "KLGA" icao)] ;; `from` is irrelevant for us
+            (if-let [full-name (:name data)]
+              (str full-name
+                   (when (and (= :airport kind)
+                          (= -1 (.indexOf (upper-case full-name) "AIRPORT")))
+                     " AIRPORT"))
+              (case kind
+                :airport (str (render-letters icao) " AIRPORT")
+                :navaid (render-letters icao)))))))
 
 (defn expand-frequencies
   "Expand frequencies. MUST be all six digits"
@@ -204,6 +229,7 @@
   (-> part
       expand-runways
       expand-taxiways
+      expand-airports-navaids
       expand-abbrs
       expand-frequencies
       expand-numbers))

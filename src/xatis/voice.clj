@@ -88,17 +88,22 @@
          (join " "))))
 
 (defn render-winds
-  [metar]
+  [meta-info metar]
   (let [wind (:wind metar)
         vrb? (= :vrb (:dir wind))
         vrb-dir (:dir-variable wind)
+        magnetic (if (:magnetic-variation meta-info)
+                   (:magnetic-add meta-info)
+                   0)
         base 
         [(cond
            vrb?  "VARIABLE"
            vrb-dir (->> vrb-dir
                         (map #(string-read-number % 3))
                         (join " VARIABLE "))
-           :else (render-read-number (:dir wind) 3))
+           :else (render-read-number 
+                   (mod (+ (:dir wind) magnetic) 360) 
+                   3))
          "AT"
          (render-read-number (:speed wind))]]
     (if-let [gust (:gust wind)]
@@ -275,7 +280,7 @@
          (string-read-number (t/minute date) 2)
          " ZULU. "
          ;; weather
-         "WIND " (join " " (flatten (render-winds wx))) ". "
+         "WIND " (join " " (flatten (render-winds meta-info wx))) ". "
          "VISIBILITY " (string-read-number (:visibility wx)) ". "
          (build-precipitation wx)
          (let [clouds (build-clouds wx)]

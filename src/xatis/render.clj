@@ -106,11 +106,23 @@
   (let [letter (first (upper-case information-letter))
         decoded (decode-metar metar)
         nato-letter (get nato letter letter)
+        mag-add? (:magnetic-add profile)
+        mag-subtract? (:magnetic-subtract profile)
+        mag-degrees (try 
+                      (Integer/parseInt
+                        (:magnetic-degrees profile))
+                      (catch Exception e
+                        0))
         zulu (:time metar)]
     {:meta
      (assoc
        config
-       :info nato-letter)
+       :info nato-letter
+       :magnetic-add (cond
+                       mag-add? mag-degrees
+                       mag-subtract? (- mag-degrees)
+                       :else 0)
+       :magnetic-variation (:magnetic-variation profile))
      :metar (subs metar (inc (.indexOf metar " " 5)))
      :weather decoded
      :parts

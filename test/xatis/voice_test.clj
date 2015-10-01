@@ -110,6 +110,22 @@
     (is (= "ONE THOUSAND ONE HUNDRED TWENTY" (read-long-number 1120)))
     (is (= "ONE THOUSAND ONE HUNDRED TWENTY ONE" (read-long-number 1121)))))
 
+(deftest render-winds-test
+  (testing "Cross 360 adding"
+    (= ["ZERO ONE ZERO" "AT" "FIVE"] 
+       (render-winds
+         {:magnetic-add 20
+          :magnetic-variation true}
+         {:wind {:dir 350
+                 :speed 5}})))
+  (testing "Cross 360 subtracting"
+    (= ["THREE FIVE ZERO" "AT" "FIVE"] 
+       (render-winds
+         {:magnetic-add -20
+          :magnetic-variation true}
+         {:wind {:dir 10
+                 :speed 5}}))))
+
 (deftest build-ceilings-test
   (testing "Below 10,000"
     (is (= "TWO THOUSAND FIVE HUNDRED FOURTY BROKEN."
@@ -132,7 +148,7 @@
     (is (= (str
              "LaGuardia Airport Information Alpha. "
              "ONE TWO FIVE ONE ZULU. "
-             "WIND ZERO NINER ZERO AT FIVE GUST ONE ZERO. "
+             "WIND ONE ZERO ZERO AT FIVE GUST ONE ZERO. " ;; note the magnetic variation
              "VISIBILITY ONE ZERO. "
              "CEILING NINER THOUSAND BROKEN. ONE FOUR THOUSAND BROKEN. "
              "TWO FIVE THOUSAND BROKEN. "

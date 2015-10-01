@@ -30,20 +30,47 @@
   (testing "DON'T expand random numbers"
     (is (= "2200" (expand-runways "2200")))))
 
+(deftest read-long-number-test
+  (testing "Small numbers"
+    (is (= "ZERO" (read-long-number 0)))
+    (is (= "ONE" (read-long-number 1)))
+    (is (= "TEN" (read-long-number 10))))
+  (testing "Teens"
+    (is (= "ELEVEN" (read-long-number 11)))
+    (is (= "TWELVE" (read-long-number 12))))
+  (testing "Tens"
+    (is (= "TWENTY" (read-long-number 20)))
+    (is (= "TWENTY ONE" (read-long-number 21))))
+  (testing "Hundreds"
+    (is (= "ONE HUNDRED" (read-long-number 100)))
+    (is (= "ONE HUNDRED ONE" (read-long-number 101)))
+    (is (= "ONE HUNDRED ELEVEN" (read-long-number 111)))
+    (is (= "ONE HUNDRED TWENTY" (read-long-number 120)))
+    (is (= "ONE HUNDRED TWENTY ONE" (read-long-number 121))))
+  (testing "Thousands"
+    (is (= "ONE THOUSAND" (read-long-number 1000)))
+    (is (= "ONE THOUSAND ONE" (read-long-number 1001)))
+    (is (= "ONE THOUSAND ELEVEN" (read-long-number 1011)))
+    (is (= "ONE THOUSAND TWENTY ONE" (read-long-number 1021)))
+    (is (= "ONE THOUSAND ONE HUNDRED ONE" (read-long-number 1101)))
+    (is (= "ONE THOUSAND ONE HUNDRED ELEVEN" (read-long-number 1111)))
+    (is (= "ONE THOUSAND ONE HUNDRED TWENTY" (read-long-number 1120)))
+    (is (= "ONE THOUSAND ONE HUNDRED TWENTY ONE" (read-long-number 1121)))))
+
 (deftest build-ceilings-test
   (testing "Below 10,000"
-    (is (= "2540 BROKEN."
+    (is (= "TWO THOUSAND FIVE HUNDRED FOURTY BROKEN."
            (build-ceilings
              {:sky [{:ceiling 2540 :type :broken}]}))))
   (testing "Above 10,000"
-    (is (= "ONE 2540 BROKEN." 
+    (is (= "ONE TWO THOUSAND FIVE HUNDRED FOURTY BROKEN." 
            (build-ceilings
              {:sky [{:ceiling 12540 :type :broken}]}))))
   (testing "At or near 10,000"
     (is (= "ONE ZERO THOUSAND BROKEN." 
            (build-ceilings
              {:sky [{:ceiling 10000 :type :broken}]})))
-    (is (= "ONE ZERO THOUSAND 500 BROKEN." 
+    (is (= "ONE ZERO THOUSAND FIVE HUNDRED BROKEN." 
            (build-ceilings
              {:sky [{:ceiling 10500 :type :broken}]})))))
 
@@ -54,7 +81,8 @@
              "ONE TWO FIVE ONE ZULU. "
              "WIND ZERO NINER ZERO AT FIVE GUST ONE ZERO. "
              "VISIBILITY ONE ZERO. "
-             "CEILING 9000 BROKEN. ONE 4000 BROKEN. TWO 5000 BROKEN. "
+             "CEILING NINER THOUSAND BROKEN. ONE FOUR THOUSAND BROKEN. "
+             "TWO FIVE THOUSAND BROKEN. "
              "TEMPERATURE TWO SIX, DEWPOINT ONE NINER. "
              "ALTIMETER THREE ZERO ZERO THREE. "
              "ILS APPROACHES IN USE. "
@@ -82,10 +110,12 @@
              "ONE TWO FIVE ONE ZULU. "
              "WIND TWO TWO ZERO VARIABLE ZERO THREE ZERO AT ONE FOUR. "
              "VISIBILITY FOUR. "
-             "LIGHT RAIN. MIST. FEW CLOUDS AT 1500. "
-             "SCATTERED CLOUDS AT 2600. "
-             "CEILING 4400 BROKEN. TWO 5000 OVERCAST. "
-             "RUNWAY FOUR RIGHT RVR 5500 VARIABLE TO GREATER THAN 6000. "
+             "LIGHT RAIN. MIST. FEW CLOUDS AT ONE THOUSAND FIVE HUNDRED. "
+             "SCATTERED CLOUDS AT TWO THOUSAND SIX HUNDRED. "
+             "CEILING FOUR THOUSAND FOUR HUNDRED BROKEN. "
+             "TWO FIVE THOUSAND OVERCAST. "
+             "RUNWAY FOUR RIGHT RVR FIVE THOUSAND FIVE HUNDRED "
+             "VARIABLE TO GREATER THAN SIX THOUSAND. "
              "TEMPERATURE TWO FOUR, DEWPOINT TWO TWO. "
              "ALTIMETER TWO NINER SIX SIX. "
              "Advise on initial contact you have information Alpha.")

@@ -5,7 +5,7 @@
 (def metar-data
   "09005G10KT 10SM BKN090 BKN140 BKN250 26/19 A3003")
 (def metar
-  (str "KLGA 311251Z " metar-data))
+  (str "KLGA 281251Z " metar-data))
 
 (def config
   {:id "KLGA"

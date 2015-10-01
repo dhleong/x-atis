@@ -14,6 +14,28 @@
    \4 "FOUR" \5 "FIVE" \6 "SIX" \7 "SEVEN"
    \8 "EIGHT" \9 "NINER"})
 
+(def teens-to-text
+  {10 "TEN"
+   11 "ELEVEN"
+   12 "TWELVE"
+   13 "THIRTEEN"
+   14 "FOURTEEN"
+   15 "FIFTEEN"
+   16 "SIXTEEN"
+   17 "SEVENTEEN"
+   18 "EIGHTEEN"
+   19 "NINETEEN"})
+
+(def tens-to-text
+  {2 "TWENTY"
+   3 "THIRTY"
+   4 "FOURTY"
+   5 "FIFTY"
+   6 "SIXTY"
+   7 "SEVENTY"
+   8 "EIGHTY"
+   9 "NINETY"})
+
 (def non-ceiling-types
   #{:few :scattered})
 (def ceiling-types
@@ -39,23 +61,30 @@
 
 (defn read-long-number
   [number]
-  (let [as-str (str number)
-        ten-thousands? (>= number 10000)
-        rest-num (if ten-thousands?
-                   (Integer/parseInt (subs as-str 1))
-                   number)
-        rest-small? (< rest-num 1000)]
-    (trim
-      (str 
-        (when ten-thousands?
-          (str (-> as-str
-                   (subs 0 1)
-                   render-numbers
-                   first)))
-        (when rest-small?
-          " ZERO THOUSAND")
-        (when (> rest-num 0)
-          (str " " rest-num))))))
+  (let [ten-thousands (int (/ number 10000))
+        thousands (int (/ (mod number 10000) 1000))
+        hundreds (int (/ (mod number 1000) 100))
+        tens (int (/ (mod number 100) 10))
+        ones (int (mod number 10))
+        ten-thousands? (> ten-thousands 0)]
+    (->> [(when ten-thousands?
+            (string-read-number ten-thousands))
+          (when (or ten-thousands?
+                    (> thousands 0))
+            (str (string-read-number thousands)
+                 " THOUSAND"))
+          (when (> hundreds 0)
+            (str (string-read-number hundreds)
+                 " HUNDRED"))
+          (cond
+            (= tens 1) (get teens-to-text (+ (* tens 10) ones))
+            (> tens 1) (str (get tens-to-text tens)))
+          (when (or (= number 0)
+                    (and (not= tens 1)
+                         (> ones 0))) 
+            (string-read-number ones))]
+         (filter (complement nil?))
+         (join " "))))
 
 (defn render-winds
   [metar]
@@ -155,12 +184,12 @@
          (expand-runways (:runway rvr))
          " RVR "
          (when-let [from (:from vis)]
-           (str from " VARIABLE TO "))
+           (str (read-long-number from) " VARIABLE TO "))
          (case (:as vis)
            :less-than "LESS THAN "
            :more-than "GREATER THAN "
            "") ;; default
-         final
+         (read-long-number final)
          ". ")))
 (defmethod build-rvr :default [_] "") ;; no rvr
 

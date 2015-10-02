@@ -12,9 +12,11 @@
                  [org.clojure/data.zip "0.1.1"]
                  [asfiled "0.1.0-SNAPSHOT"]
                  [clj-time "0.11.0"]
+                 [seesaw "1.4.5"]
                  [de.dfki.mary/marytts-runtime "5.2-SNAPSHOT"]
                  [de.dfki.mary/marytts-lang-en "5.2-SNAPSHOT"]
                  [de.dfki.mary/voice-cmu-slt-hsmm "5.2-SNAPSHOT"]]
   :main ^:skip-aot xatis.core
   :target-path "target/%s"
+  :jvm-opts ["-Xdock:name=xAtis"] 
   :profiles {:uberjar {:aot :all}})

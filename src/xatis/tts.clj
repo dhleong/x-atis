@@ -3,6 +3,7 @@
   xatis.tts
   (:require [clojure.string :as s])
   (:import [java.util Locale]
+           [javax.sound.sampled LineEvent LineEvent$Type LineListener]
            [marytts LocalMaryInterface]
            [marytts.util.data.audio AudioPlayer]))
 
@@ -42,8 +43,15 @@
 ;;
 
 (defn- perform-speech
-  [audio]
-  (doto (AudioPlayer. audio)
+  [audio & [on-finished]]
+  (doto (if on-finished
+          (AudioPlayer. 
+            audio
+            (reify LineListener 
+              (update [this event]
+                (when (= LineEvent$Type/STOP (.getType event))
+                  (on-finished)))))
+          (AudioPlayer. audio))
     (.start)))
 
 (defn process-text
@@ -67,7 +75,7 @@
        (.generateAudio marytts)))
 
 (defn preview-speech
-  [text-or-audio]
+  [text-or-audio & [on-finished]]
   (if (string? text-or-audio)
-    (perform-speech (generate-speech text-or-audio))
-    (perform-speech text-or-audio)))
+    (perform-speech (generate-speech text-or-audio) on-finished)
+    (perform-speech text-or-audio on-finished)))

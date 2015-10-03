@@ -13,6 +13,7 @@
             [xatis
              [render :refer [render-atis atis-parts nato]]
              [util :refer [re-replace]]
+             [tts :refer [preview-speech]]
              [voice :refer [build-part build-voice]]]))
 
 ;;
@@ -31,6 +32,8 @@
         :normal-update :normal-update-time
         :magnetic-variation :magnetic-degrees
         :magnetic-subtract :magnetic-add))
+
+(def running-preview (atom nil))
 
 (declare show-config)
 
@@ -291,6 +294,7 @@
         (b/transform (safely build-voice))
         (b/filter (complement nil?))
         (b/value (s/select f [:#preview])))
+      (b/property (s/select f [:#preview-atis]) :enabled?)
       (b/b-do 
         [v]
         (swap! (get-metar f) (constantly v))))))
@@ -332,6 +336,18 @@
   (s/input (str "Select " (:id config) " profile")
            :choices (:profiles config)
            :to-string :name))
+
+(defn toggle-atis-preview
+  [f]
+  (if-let [running @running-preview]
+    (swap! running-preview (constantly (.cancel running)))
+    (let [preview (s/value (s/select (s/to-frame f) [:#preview]))]
+      (when-not (empty? preview)
+        (swap! running-preview 
+               (constantly
+                 (preview-speech preview
+                                 #(swap! running-preview 
+                                         (constantly nil)))))))))
 
 (defn- show-config-window
   [config profile]
@@ -387,7 +403,20 @@
                    ["ATIS Frequency" "span 3"]
                    [(s/text :id :frequency)
                     "span 3,grow"]
-                   ]))
+                   ;; bottom bar
+                   [(s/button :id :connect-atis
+                              :text "Connect ATIS"
+                              :enabled? false)
+                    "span 2,grow"]
+                   [(s/button :id :preview-atis
+                              :text "Preview ATIS"
+                              :enabled? false
+                              :listen 
+                              [:action #(toggle-atis-preview %)])
+                    "span 2,grow"]
+                   [(s/button :id :connect
+                              :text "Connect")
+                    "span 2,grow"]]))
               s/pack!
               s/show!)]
     ;; ensure timer gets cleaned up

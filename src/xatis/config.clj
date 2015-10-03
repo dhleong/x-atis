@@ -378,7 +378,7 @@
                             :halign :center
                             :text "A----") "grow,span 2"]
                    [(s/button :id :profile-select
-                              :text (:name profile)) "grow,span 1"]
+                              :text (:name profile)) "alignx right,span 1"]
                    ;; middle
                    [(s/tabbed-panel
                       :placement :top
@@ -408,19 +408,22 @@
                    [(s/text :id :frequency)
                     "span 3,grow"]
                    ;; bottom bar
-                   [(s/button :id :connect-atis
-                              :text "Connect ATIS"
-                              :enabled? false)
-                    "span 2"]
-                   [(s/button :id :preview-atis
-                              :text "Preview ATIS"
-                              :enabled? false
-                              :listen 
-                              [:action #(toggle-atis-preview %)])
-                    "span 2"]
+                   ;; for some reason, if these aren't in a 
+                   ;;  flow-panel, the whole window stretches
+                   [(s/flow-panel
+                      :items
+                      [(s/button :id :connect-atis
+                                 :text "Connect ATIS"
+                                 :enabled? false)
+                       (s/button :id :preview-atis
+                                 :text "Preview ATIS"
+                                 :enabled? false
+                                 :listen 
+                                 [:action #(toggle-atis-preview %)])])
+                    "span 7"]
                    [(s/button :id :connect
                               :text "Connect")
-                    "span 5,alignx right"]
+                    "span 2,alignx right"]
                    ]))
               s/pack!
               s/show!)]

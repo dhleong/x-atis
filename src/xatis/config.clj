@@ -1,14 +1,18 @@
 (ns ^{:author "Daniel Leong"
       :doc "Configuration UI once a profile is selected"}
   xatis.config
-  (:require [clj-time
+  (:require [clojure.string :refer [capitalize upper-case]]
+            [clj-time
              [core :as t]
              [format :as f]]
             [seesaw
              [core :as s]
              [mig :refer [mig-panel]]]
             [asfiled.metar :refer [decode-metar]]
-            [xatis.render :refer [nato]]))
+            [xatis
+             [render :refer [atis-parts nato]]
+             [util :refer [re-replace]]
+             [voice :refer [build-part]]]))
 
 ;;
 ;; Constants
@@ -21,6 +25,24 @@
 ;;
 ;; Util
 ;;
+
+(defn flag-checkbox
+  [flag-key]
+  (loop [my-atis-parts atis-parts]
+    (if-let [[k v] (first my-atis-parts)]
+      (if (and (= flag-key k)
+               (string? v))
+        (let [label 
+              (->> v
+                   build-part
+                   capitalize
+                   (re-replace
+                     #"Vfr|atc"
+                     upper-case))]
+          (s/checkbox :id flag-key
+                      :text label))
+        (recur (next my-atis-parts)))
+      (throw (IllegalArgumentException. (str "No ATIS flag " flag-key))))))
 
 (defmacro deftab
   [id label & body]
@@ -89,21 +111,13 @@
   "Dep/Arr Flags"
   (s/vertical-panel
     :items
-    [(s/checkbox :id :simul-approach-intersecting
-                 :text (str "Simultaneous approaches to parallel and "
-                            "intersecting runways are in use."))
-     (s/checkbox :id :converging-ops
-                 :text "Converging runway operations in effect.")
-     (s/checkbox :id :land-hold-short
-                 :text "Land and hold short operations in effect.")
-     (s/checkbox :id :simul-approachs
-                 :text "Simultaneous approaches in use.")
-     (s/checkbox :id :grass-ops
-                 :text "Grass runway operations in effect.")
-     (s/checkbox :id :windshear-advs
-                 :text "Low-level wind shear advisories in effect")
-     (s/checkbox :id :vfr-direction
-                 :text "VFR aircraft say direction of flight") ]))
+    [(flag-checkbox :simul-approach-intersecting)
+     (flag-checkbox :converging-ops)
+     (flag-checkbox :land-hold-short)
+     (flag-checkbox :simul-approachs)
+     (flag-checkbox :grass-ops)
+     (flag-checkbox :windshear-advs)
+     (flag-checkbox :vfr-direction) ]))
 
 (deftab tab-notams
   "NOTAMs"
@@ -116,25 +130,13 @@
   "Closing Flags"
   (s/vertical-panel
     :items
-    [(s/checkbox :id :hold-short-intructions
-                 :text "Readback all runway hold short instructions.")
-     (s/checkbox :id :readback-assigned-alt
-                 :text (str "Readback all runway hold short "
-                            "instructions and assigned altitudes."))
+    [(flag-checkbox :hold-short-intructions)
+     (flag-checkbox :readback-assigned-alt)
      (s/checkbox :id :deps-ctc-freq
                  :text "All departures contact") ;; FIXME
-     (s/checkbox :id :readback-callsign
-                 :text (str "Upon receipt of your ATC clearance "
-                            "readback only your callsign "
-                            "and transponder code code unless "
-                            "you have a question."))
-     (s/checkbox :id :verify-sid
-                 :text (str "Verify your assigned standard instrument "
-                            "with clearance delivery when ready to "
-                            "push and taxi."))
-     (s/checkbox :id :mode-charlie
-                 :text (str "Operate transponder on mode charlie "
-                            "on all twys and rwys."))
+     (flag-checkbox :readback-callsign)
+     (flag-checkbox :verify-sid)
+     (flag-checkbox :mode-charlie)
      (s/checkbox :id :hazardous-weather
                  :text (str "Attention all aircraft, hazardous weather "
                             "info for "
@@ -148,7 +150,7 @@
     [(s/checkbox :id :normal-update
                  :text "Normal METAR Update Time")
      (s/checkbox :id :magnetic-variation
-                 :text "Magnetic Variation")
+                 :text "Magnetic Variation") ;; TODO
      (s/checkbox :id :eu-parse
                  :text "Non-US METAR Parse")]))
 

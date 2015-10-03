@@ -369,9 +369,13 @@
                    [zulu-time-widget "grow,span 2"]
                    [(s/text :id :winds
                             :editable? false
+                            :columns 9
+                            :halign :center
                             :text "--- @ --") "grow,span 3"]
                    [(s/text :id :altimeter
                             :editable? false
+                            :columns 8
+                            :halign :center
                             :text "A----") "grow,span 2"]
                    [(s/button :id :profile-select
                               :text (:name profile)) "grow,span 1"]
@@ -407,16 +411,17 @@
                    [(s/button :id :connect-atis
                               :text "Connect ATIS"
                               :enabled? false)
-                    "span 2,grow"]
+                    "span 2"]
                    [(s/button :id :preview-atis
                               :text "Preview ATIS"
                               :enabled? false
                               :listen 
                               [:action #(toggle-atis-preview %)])
-                    "span 2,grow"]
+                    "span 2"]
                    [(s/button :id :connect
                               :text "Connect")
-                    "span 2,grow"]]))
+                    "span 5,alignx right"]
+                   ]))
               s/pack!
               s/show!)]
     ;; ensure timer gets cleaned up

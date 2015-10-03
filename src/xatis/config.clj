@@ -85,6 +85,74 @@
                   :text "DME approaches in use")
       "grow"]]))
 
+(deftab tab-dep-arr-flags
+  "Dep/Arr Flags"
+  (s/vertical-panel
+    :items
+    [(s/checkbox :id :simul-approach-intersecting
+                 :text (str "Simultaneous approaches to parallel and "
+                            "intersecting runways are in use."))
+     (s/checkbox :id :converging-ops
+                 :text "Converging runway operations in effect.")
+     (s/checkbox :id :land-hold-short
+                 :text "Land and hold short operations in effect.")
+     (s/checkbox :id :simul-approachs
+                 :text "Simultaneous approaches in use.")
+     (s/checkbox :id :grass-ops
+                 :text "Grass runway operations in effect.")
+     (s/checkbox :id :windshear-advs
+                 :text "Low-level wind shear advisories in effect")
+     (s/checkbox :id :vfr-direction
+                 :text "VFR aircraft say direction of flight") ]))
+
+(deftab tab-notams
+  "NOTAMs"
+  (s/text :id :notam
+          :multi-line? true
+          :wrap-lines? true
+          :rows 5))
+
+(deftab tab-closing-flags
+  "Closing Flags"
+  (s/vertical-panel
+    :items
+    [(s/checkbox :id :hold-short-intructions
+                 :text "Readback all runway hold short instructions.")
+     (s/checkbox :id :readback-assigned-alt
+                 :text (str "Readback all runway hold short "
+                            "instructions and assigned altitudes."))
+     (s/checkbox :id :deps-ctc-freq
+                 :text "All departures contact") ;; FIXME
+     (s/checkbox :id :readback-callsign
+                 :text (str "Upon receipt of your ATC clearance "
+                            "readback only your callsign "
+                            "and transponder code code unless "
+                            "you have a question."))
+     (s/checkbox :id :verify-sid
+                 :text (str "Verify your assigned standard instrument "
+                            "with clearance delivery when ready to "
+                            "push and taxi."))
+     (s/checkbox :id :mode-charlie
+                 :text (str "Operate transponder on mode charlie "
+                            "on all twys and rwys."))
+     (s/checkbox :id :hazardous-weather
+                 :text (str "Attention all aircraft, hazardous weather "
+                            "info for "
+                            ;; FIXME
+                            " area available from ATC by request."))]))
+
+(deftab tab-config
+  "Closing Flags"
+  (s/vertical-panel
+    :items
+    [(s/checkbox :id :normal-update
+                 :text "Normal METAR Update Time")
+     (s/checkbox :id :magnetic-variation
+                 :text "Magnetic Variation")
+     (s/checkbox :id :eu-parse
+                 :text "Non-US METAR Parse")]))
+
+
 ;;
 ;; Primary utils
 ;;
@@ -122,7 +190,11 @@
                       :placement :top
                       :overflow :scroll
                       :tabs 
-                      [(tab-dep-arr)])
+                      [(tab-dep-arr)
+                       (tab-dep-arr-flags)
+                       (tab-notams)
+                       (tab-closing-flags)
+                       (tab-config)])
                     "grow,span 9 4"]]))
               s/pack!
               s/show!)]

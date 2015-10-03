@@ -31,7 +31,8 @@
         :ctc-position :ctc-freq
         :normal-update :normal-update-time
         :magnetic-variation :magnetic-degrees
-        :magnetic-subtract :magnetic-add))
+        :magnetic-subtract :magnetic-add
+        :atis-letter))
 
 (def running-preview (atom nil))
 

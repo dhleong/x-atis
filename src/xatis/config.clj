@@ -6,13 +6,14 @@
              [core :as t]
              [format :as f]]
             [seesaw
+             [bind :as b]
              [core :as s]
              [mig :refer [mig-panel]]]
             [asfiled.metar :refer [decode-metar]]
             [xatis
-             [render :refer [atis-parts nato]]
+             [render :refer [render-atis atis-parts nato]]
              [util :refer [re-replace]]
-             [voice :refer [build-part]]]))
+             [voice :refer [build-part build-voice]]]))
 
 ;;
 ;; Constants
@@ -22,11 +23,41 @@
 (def wind-format "%03d @ %02d")
 (def zulu-formatter (f/formatter "HHmm/ss"))
 
+;; list of keys whose value changes affect the metar
+(def valuable-keys
+  (conj (map first atis-parts)
+        :hazardous-weather-area
+        :ctc-position :ctc-freq
+        :normal-update :normal-update-time
+        :magnetic-variation :magnetic-degrees
+        :magnetic-subtract :magnetic-add))
+
 (declare show-config)
 
 ;;
 ;; Util
 ;;
+
+(defn- user-data
+  [widgetable]
+  (-> (s/to-frame widgetable)
+      (s/select [:#container])
+      s/user-data))
+
+(defn- get-config
+  [widgetable]
+  (-> (user-data widgetable) :config))
+
+(defn- get-metar
+  "Returns the current (raw) METAR in an atom.
+  Note that the value may be nil"
+  [widgetable]
+  (-> (user-data widgetable) :metar))
+
+(defn- get-profile
+  "Returns the profile in an atom"
+  [widgetable]
+  (-> (user-data widgetable) :profile))
 
 (defn flag-checkbox
   [flag-key]
@@ -207,12 +238,100 @@
 ;; Primary utils
 ;;
 
+(defn- safely
+  [fun]
+  (fn [& args]
+    (try
+      (apply fun args)
+      (catch Exception e
+        (def last-safe-exc e)
+        nil))))
+
+(defn- handle-metar
+  "Bind event handling for METAR updates"
+  [f]
+  (b/bind
+    (s/select f [:#metar])
+    (b/transform #(try
+                    (decode-metar %)
+                    % ;; just making sure we CAN
+                    (catch Exception e
+                      (def last-metar-exc e)
+                      nil)))
+    (b/filter (complement nil?))
+    (b/tee
+      ;; everyone who wants it decoded...
+      (b/bind
+        (b/transform decode-metar)
+        (b/tee
+          ;; update the wind
+          (b/bind
+            (b/transform 
+              #(let [wind (:wind %)]
+                 (if (= :vrb (:speed wind))
+                   (format vrb-wind-format (:dir wind))
+                   (format wind-format (:speed wind) (:dir wind)))))
+            (b/value (s/select f [:#winds])))
+          ;; update altimeter
+          (b/bind
+            (b/transform
+              #(str "A" (:altimeter %)))
+            (b/value (s/select f [:#altimeter])))))
+      ;; update the preview
+      (b/bind
+        (b/transform
+          #(try
+             (render-atis 
+               (get-config f)
+               @(get-profile f)
+               %
+               (s/value (s/select f [:#atis-letter])))
+             (catch Exception e
+               (def last-render-exc e))))
+        (b/transform (safely build-voice))
+        (b/filter (complement nil?))
+        (b/value (s/select f [:#preview])))
+      (b/b-do 
+        [v]
+        (swap! (get-metar f) (constantly v))))))
+
+(defn- handle-values
+  [f]
+  (doseq [k valuable-keys]
+    (if-let [widget (s/select f [(keyword (str "#" (name k)))])]
+      (b/bind 
+        widget
+        (b/transform
+          ;; this transform will both update the profile
+          ;;  and return it from the atom as a map, for
+          ;;  the rest of the chain to use
+          #(swap! (get-profile f) assoc k %))
+        ;; do nothing if we don't have a metar
+        (b/filter (fn [_]
+                    (try 
+                      (decode-metar @(get-metar f))
+                      (catch Exception e
+                        (def last-metar-exc e)
+                        nil))))
+        (b/transform
+          #(try
+             (render-atis 
+               (get-config f)
+               %
+               @(get-metar f)
+               (s/value (s/select f [:#atis-letter])))
+             (catch Exception e
+               (def last-render-exc e))))
+        (b/transform (safely build-voice))
+        (b/filter (complement nil?))
+        (b/value (s/select f [:#preview])))
+      (def unfound-widget k)))) ;; FIXME departing-rwys, etc.
+
 (defn- pick-profile
   [config]
   (s/input (str "Select " (:id config) " profile")
            :choices (:profiles config)
            :to-string :name))
-
 
 (defn- show-config-window
   [config profile]
@@ -223,7 +342,11 @@
                 :resizable? false
                 :content
                 (mig-panel
+                  :id :container
                   :constraints ["wrap 9"]
+                  :user-data {:config config
+                              :metar (atom nil)
+                              :profile (atom profile)}
                   :items
                   ;; top row
                   [[(atis-letter-box) "grow"]
@@ -246,7 +369,25 @@
                        (tab-notams)
                        (tab-closing-flags)
                        (tab-config)])
-                    "span 9 4,wmax 640"]]))
+                    "span 9 4,wmax 640,hmin 330"]
+                   ;; metar line
+                   [(s/text :id :metar)
+                    "span 9,grow"]
+                   ;; voice connection and preview
+                   ["Voice Server" "span 3"]
+                   [(s/scrollable
+                      (s/text :id :preview
+                              :editable? false
+                              :margin 4
+                              :multi-line? true
+                              :wrap-lines? true))
+                    "span 6 4,grow"]
+                   [(s/text :id :server)
+                    "span 3,grow"]
+                   ["ATIS Frequency" "span 3"]
+                   [(s/text :id :frequency)
+                    "span 3,grow"]
+                   ]))
               s/pack!
               s/show!)]
     ;; ensure timer gets cleaned up
@@ -259,8 +400,12 @@
         (.dispose e)
         ;; TODO ensure disconnected
         (show-config config)))
-    ;; fill fields from profile
+    ;; fill fields from profile/config
     (s/value! f profile)
+    (s/value! f config)
+    ;; when the metar changes, do all the things
+    (handle-metar f)
+    (handle-values f)
     (def last-frame f)
     f)) ;; return the frame
 
@@ -270,12 +415,11 @@
 
 (defn update-weather!
   [root raw-metar]
-  (let [metar (decode-metar raw-metar)
-        wind (:wind metar)]
-    (s/text! (s/select root [:#winds]) 
-             (if (= :vrb (:speed wind))
-               (format vrb-wind-format (:dir wind))
-               (format wind-format (:speed wind) (:dir wind))))))
+  ;; the bindings will handle everything
+  (let [widget (s/select root [:#metar])]
+    (s/text! widget raw-metar)
+    ;; this widget doesn't seem to get updated
+    (s/repaint! widget)))
 
 (defn show-config
   ([config]

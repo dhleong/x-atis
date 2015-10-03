@@ -102,4 +102,10 @@
                                 metar "a"))]
       (is (= (str "ALL DEPS CTC LOS ANGELES GROUND "
                   "ON 121.650 PRIOR TO TAXI.")
-             (nth parts 0))))))
+             (nth parts 0)))))
+  (testing "Drop empty strings"
+    (let [parts (:parts
+                   (render-atis config 
+                                {:notam ""}
+                                metar "a"))]
+      (is (empty?  parts)))))

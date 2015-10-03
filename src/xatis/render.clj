@@ -129,14 +129,17 @@
      (->> atis-parts
           (mapcat
             (fn [[k v]] 
-              (when (get profile k)
-                (let [parsed 
-                      (cond
-                        (string? v) v
-                        (= identity v) (k profile)
-                        :else (v profile))]
-                  (if (and (seq parsed)
-                           (not (string? parsed)))
-                    parsed
-                    [parsed])))))
+              (let [prof-val (get profile k)]
+                (when (and prof-val
+                           (or (not (string? prof-val))
+                               (not (empty? prof-val))))
+                  (let [parsed 
+                        (cond
+                          (string? v) v
+                          (= identity v) (k profile)
+                          :else (v profile))]
+                    (if (and (seq parsed)
+                             (not (string? parsed)))
+                      parsed
+                      [parsed]))))))
           (filter identity))}))

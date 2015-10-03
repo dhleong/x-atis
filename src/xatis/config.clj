@@ -22,6 +22,8 @@
 (def wind-format "%03d @ %02d")
 (def zulu-formatter (f/formatter "HHmm/ss"))
 
+(declare show-config)
+
 ;;
 ;; Util
 ;;

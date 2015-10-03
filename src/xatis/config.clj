@@ -40,7 +40,8 @@
                    capitalize
                    (re-replace
                      #"Vfr|atc"
-                     upper-case))]
+                     upper-case)
+                   (str "<html>"))]
           (s/checkbox :id flag-key
                       :text label))
         (recur (next my-atis-parts)))
@@ -85,10 +86,11 @@
     :constraints ["wrap 3"]
     :items
     [[(s/text :id :dep-arr-notice
+              :margin 4
               :multi-line? true
               :wrap-lines? true
-              :rows 3)
-      "grow,span 4 3"]
+              :rows 5)
+      "grow,span 4 3,pushy"]
      [(s/checkbox :id :ils-approach
                   :text "ILS approaches in use")
       "grow"]
@@ -124,37 +126,81 @@
 (deftab tab-notams
   "NOTAMs"
   (s/text :id :notam
+          :margin 4
           :multi-line? true
           :wrap-lines? true
           :rows 5))
 
 (deftab tab-closing-flags
   "Closing Flags"
-  (s/vertical-panel
+  (mig-panel
+    :constraints ["wrap 1"]
     :items
-    [(flag-checkbox :hold-short-intructions)
-     (flag-checkbox :readback-assigned-alt)
-     (s/checkbox :id :deps-ctc-freq
-                 :text "All departures contact") ;; FIXME
-     (flag-checkbox :readback-callsign)
-     (flag-checkbox :verify-sid)
-     (flag-checkbox :mode-charlie)
-     (s/checkbox :id :hazardous-weather
-                 :text (str "Attention all aircraft, hazardous weather "
-                            "info for "
-                            ;; FIXME
-                            " area available from ATC by request."))]))
+    [[(flag-checkbox :hold-short-intructions)]
+     [(flag-checkbox :readback-assigned-alt)]
+     [(s/flow-panel
+        :align :left
+        :items
+        [(s/checkbox :id :deps-ctc-freq
+                     :text "All departures contact")
+         (s/text :id :ctc-position
+                 :columns 8)
+         " on "
+         (s/text :id :ctc-freq
+                 :columns 7)
+         " prior to taxi."])
+      "pad 0 -5"] ;; necessary for alignment (weird))
+     [(flag-checkbox :readback-callsign)]
+     [(flag-checkbox :verify-sid)]
+     [(flag-checkbox :mode-charlie)]
+     [(s/flow-panel
+        :align :left
+        :items
+        [(s/checkbox 
+           :id :hazardous-weather
+           :text (str "Attention all aircraft, "
+                      "hazardous weather info for"))
+         (s/text :id :hazardous-weather-area
+                 :columns 12) 
+         "area"])
+      "pad 0 -5"] ;; see above
+     ;; super hax to make it look sort-of wrapped
+     ["available from ATC by request."
+      "pad -45 30"]]))
 
 (deftab tab-config
-  "Closing Flags"
-  (s/vertical-panel
+  "Configuration"
+  (mig-panel
+    :constraints ["wrap 1"]
     :items
-    [(s/checkbox :id :normal-update
-                 :text "Normal METAR Update Time")
-     (s/checkbox :id :magnetic-variation
-                 :text "Magnetic Variation") ;; TODO
-     (s/checkbox :id :eu-parse
-                 :text "Non-US METAR Parse")]))
+    [[(s/flow-panel
+        :align :left
+        :items 
+        [(s/checkbox 
+           :id :normal-update
+           :text "Normal METAR Update Time    xx")
+         (s/text :id :normal-update-time
+                 :columns 2)
+         "zulu"])
+      "pad 0 -5"] ;; see above
+     [(s/flow-panel
+        :align :left
+        :items 
+        [(s/checkbox 
+           :id :magnetic-variation
+           :text "Magnetic Variation")
+         (s/vertical-panel
+           :items
+           [(s/radio :id :magnetic-subtract
+                     :text "Subtract")
+            (s/radio :id :magnetic-add
+                     :text "Add")])
+         (s/text :id :magnetic-degrees
+                 :columns 3)
+         "Degrees"])
+      "pad 0 -5"]
+     [(s/checkbox :id :eu-parse
+                  :text "Non-US METAR Parse")]]))
 
 
 ;;
@@ -174,6 +220,7 @@
         f (-> (s/frame
                 :title (str "xAtis - " (:facility config))
                 :on-close :dispose
+                :resizable? false
                 :content
                 (mig-panel
                   :constraints ["wrap 9"]
@@ -199,7 +246,7 @@
                        (tab-notams)
                        (tab-closing-flags)
                        (tab-config)])
-                    "grow,span 9 4"]]))
+                    "span 9 4,wmax 640"]]))
               s/pack!
               s/show!)]
     ;; ensure timer gets cleaned up

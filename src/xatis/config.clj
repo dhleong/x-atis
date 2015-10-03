@@ -397,7 +397,7 @@
       (s/select f [:#profile-select])
       :mouse-clicked
       (fn [e]
-        (.dispose e)
+        (.dispose f)
         ;; TODO ensure disconnected
         (show-config config)))
     ;; fill fields from profile/config

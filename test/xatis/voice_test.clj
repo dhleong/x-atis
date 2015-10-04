@@ -148,7 +148,7 @@
     (is (= (str
              "LaGuardia Airport Information Alpha. "
              "ONE TWO FIVE ONE ZULU. "
-             "WIND ONE ZERO ZERO AT FIVE GUST ONE ZERO. " ;; note the magnetic variation
+             "WIND ONE ZERO ZERO AT FIVE GUSTS ONE ZERO. " ;; note the magnetic variation
              "VISIBILITY ONE ZERO. "
              "CEILING NINER THOUSAND BROKEN. ONE FOUR THOUSAND BROKEN. "
              "TWO FIVE THOUSAND BROKEN. "
@@ -165,16 +165,16 @@
 
 (deftest voice-weather-tests
   (testing "No Ceiling"
-   (is (= (str
-            "LaGuardia Airport Information Alpha. "
-            "ONE TWO FIVE ONE ZULU. "
-            "WIND ZERO ONE ZERO AT FOUR. "
-            "VISIBILITY FOUR. "
-            "TEMPERATURE TWO FOUR, DEWPOINT TWO TWO. "
-            "ALTIMETER TWO NINER SIX SIX. "
-            "Advise on initial contact you have information Alpha.")
-          (build-weather
-            "KLGA 301251Z 01004KT 4SM 24/22 A2966")))))
+    (is (= (str
+             "LaGuardia Airport Information Alpha. "
+             "ONE TWO FIVE ONE ZULU. "
+             "WIND ZERO ONE ZERO AT FOUR. "
+             "VISIBILITY FOUR. "
+             "TEMPERATURE TWO FOUR, DEWPOINT TWO TWO. "
+             "ALTIMETER TWO NINER SIX SIX. "
+             "Advise on initial contact you have information Alpha.")
+           (build-weather
+             "KLGA 301251Z 01004KT 4SM 24/22 A2966"))))
   (testing "Fancy Weather"
     (is (= (str
              "LaGuardia Airport Information Alpha. "
@@ -182,7 +182,7 @@
              "WIND TWO TWO ZERO VARIABLE ZERO THREE ZERO AT ONE FOUR. "
              "VISIBILITY FOUR. "
              "LIGHT RAIN. MIST. FEW CLOUDS AT ONE THOUSAND FIVE HUNDRED. "
-             "SCATTERED CLOUDS AT TWO THOUSAND SIX HUNDRED. "
+             "TWO THOUSAND SIX HUNDRED SCATTERED. "
              "CEILING FOUR THOUSAND FOUR HUNDRED BROKEN. "
              "TWO FIVE THOUSAND OVERCAST. "
              "RUNWAY FOUR RIGHT RVR FIVE THOUSAND FIVE HUNDRED "
@@ -192,4 +192,4 @@
              "Advise on initial contact you have information Alpha.")
            (build-weather
              "KLGA 301251Z 220V03014KT 4SM R04R/5500VP6000FT -RA BR
-             FEW015 SCT026 BKN044 OVC250 24/22 A2966"))))
+             FEW015 SCT026 BKN044 OVC250 24/22 A2966")))))

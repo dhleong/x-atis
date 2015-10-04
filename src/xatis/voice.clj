@@ -38,7 +38,7 @@
    9 "NINETY"})
 
 (def non-ceiling-types
-  #{:few :scattered})
+  #{:few})
 (def ceiling-types
   #{:broken :overcast})
 
@@ -107,7 +107,7 @@
          "AT"
          (render-read-number (:speed wind))]]
     (if-let [gust (:gust wind)]
-      (concat base ["GUST" (render-read-number gust)])
+      (concat base ["GUSTS" (render-read-number gust)])
       base)))
 
 (defn render-letters
@@ -200,11 +200,14 @@
   [wx]
   (->> (:sky wx)
        (filter #(not (contains? ceiling-types (:type %))))
-       (map #(let [feet (read-long-number (:ceiling %))]
-               (str (upper-case (name (:type %)))
-                    " CLOUDS AT "
-                    feet
-                    ".")))
+       (map #(let [feet (read-long-number (:ceiling %))
+                   clouds-name (upper-case (name (:type %)))]
+               (if (contains? non-ceiling-types (:type %))
+                 (str clouds-name
+                      " CLOUDS AT "
+                      feet
+                      ".")
+                 (str feet " " clouds-name "."))))
        (join " ")))
 
 (defn build-ceilings

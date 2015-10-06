@@ -5,6 +5,7 @@
             [xatis
              [render :refer [render-atis]]
              [text :refer [build-text]]
+             [util :refer [split-atis]]
              [network :refer [XAtisNetwork]]]))
 
 (require-stub aileron.core :as a :else xatis.stubs.aileron)
@@ -42,7 +43,8 @@
                       @profile-atom
                       @metar-atom
                       (atis-letter-factory))
-                    build-text))
+                    build-text
+                    split-atis))
     (-> VatsimNetwork
         conn
         profile-atom)))

@@ -16,9 +16,9 @@
     "Returns true if we have an active connection 
     to the network.")
   (connect!
-    [this params]
-    "Request a connection to the network using
-    the given parameters.")
+    [this on-fail]
+    "Prompt to connect to the network. on-fail should
+    be called on a failed connection.")
   (disconnect!
     [this]
     "Sever any active connection with the network.")

@@ -11,10 +11,12 @@
              [mig :refer [mig-panel]]]
             [asfiled.metar :refer [decode-metar]]
             [xatis
+             [network :refer :all]
              [render :refer [render-atis atis-parts nato]]
              [util :refer [re-replace]]
              [tts :refer [preview-speech]]
-             [voice :refer [build-part build-voice]]]))
+             [voice :refer [build-part build-voice]]]
+            [xatis.networks.vatsim :as vatsim]))
 
 ;;
 ;; Constants
@@ -57,6 +59,11 @@
   Note that the value may be nil"
   [widgetable]
   (-> (user-data widgetable) :metar))
+
+(defn- get-network
+  "Returns the current XAtisNetwork instance"
+  [widgetable]
+  (-> (user-data widgetable) :network))
 
 (defn- get-profile
   "Returns the profile in an atom"
@@ -350,9 +357,30 @@
                                  #(swap! running-preview 
                                          (constantly nil)))))))))
 
+(defn toggle-connection
+  [e]
+  (let [network (get-network e)
+        button (s/to-widget e)
+        new-label (if (connected? network)
+                    "Connect" ;; we'll be disconnecting
+                    "Disconnect")]
+    (s/text! button new-label)
+    (if (connected? network)
+      (disconnect! network)
+      (connect! network 
+                (fn [& _]
+                  ;; TODO notify error
+                  (s/invoke-later
+                    (s/text! button "Connect")))))))
+
 (defn- show-config-window
   [config profile]
-  (let [[zulu-time-widget timer] (zulu-time)
+  (let [metar-atom (atom nil)
+        profile-atom (atom profile)
+        atis-letter-widget (atis-letter-box)
+        network (vatsim/create-network config metar-atom profile-atom
+                                       #(s/value atis-letter-widget))
+        [zulu-time-widget timer] (zulu-time)
         f (-> (s/frame
                 :title (str "xAtis - " (:facility config))
                 :on-close :dispose
@@ -362,11 +390,12 @@
                   :id :container
                   :constraints ["wrap 9"]
                   :user-data {:config config
-                              :metar (atom nil)
-                              :profile (atom profile)}
+                              :metar metar-atom
+                              :network network
+                              :profile profile-atom}
                   :items
                   ;; top row
-                  [[(atis-letter-box) "grow"]
+                  [[atis-letter-widget "grow"]
                    [zulu-time-widget "grow,span 2"]
                    [(s/text :id :winds
                             :editable? false
@@ -420,10 +449,12 @@
                                  :text "Preview ATIS"
                                  :enabled? false
                                  :listen 
-                                 [:action #(toggle-atis-preview %)])])
+                                 [:action toggle-atis-preview])])
                     "span 7"]
                    [(s/button :id :connect
-                              :text "Connect")
+                              :text "Connect"
+                              :listen
+                              [:action toggle-connection])
                     "span 2,alignx right"]
                    ]))
               s/pack!

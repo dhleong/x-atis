@@ -1,7 +1,8 @@
 (ns ^{:author "Daniel Leong"
       :doc "Vatsim network implementation"}
   xatis.networks.vatsim
-  (:require [stubby.core :refer [require-stub]]
+  (:require [seesaw.core :as s]
+            [stubby.core :refer [require-stub]]
             [xatis
              [render :refer [render-atis]]
              [text :refer [build-text]]
@@ -17,9 +18,13 @@
     ;; TODO
     )
   (connect!
-    [this params]
-    ;; TODO connect!
-    )
+    [this on-fail]
+    ;; FIXME actually prompt for this
+    (future
+      (a/connect! conn) ;; FIXME the args
+      (Thread/sleep 1200) ;; FIXME remove all this
+      (s/invoke-later 
+        (on-fail))))
   (connected?
     [this]
     (a/connected? conn))
@@ -45,6 +50,6 @@
                       (atis-letter-factory))
                     build-text
                     split-atis))
-    (-> VatsimNetwork
-        conn
-        profile-atom)))
+    (->VatsimNetwork
+      conn
+      profile-atom)))

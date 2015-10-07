@@ -5,6 +5,7 @@
             [seesaw
              [core :as s]
              [mig :refer [mig-panel]]]
+            [asfiled.skyvector :refer [get-vor]]
             [stubby.core :refer [require-stub]]
             [xatis
              [render :refer [render-atis]]
@@ -19,7 +20,7 @@
 ;; Constants
 ;;
 
-(def text-value-fields [:name :cid :pass])
+(def text-value-fields [:full-name :cid :pass])
 
 (def ratings ["Observer"
               "Student1"
@@ -53,8 +54,8 @@
                 :constraints ["wrap 2"]
                 :items 
                 [["Full Name:" "right"]
-                 [(s/text :id :name 
-                          :text (:name saved-info)) "grow,w 70::"]
+                 [(s/text :id :full-name 
+                          :text (:full-name saved-info)) "grow,w 70::"]
                  ["Rating:" "right"]
                  [(s/combobox :id :rating
                               :model ratings)]
@@ -110,14 +111,25 @@
   (connect!
     [this on-fail]
     (prompt-credentials
-      #(if-let [{:keys [:name :cid :pass :rating :server]} %]
-         ;; we got the stuff; connect
-         (future
-           (a/connect! conn) ;; FIXME the args
-           (Thread/sleep 1200) ;; FIXME remove all this
-           (on-fail))
-         ;; they canceled or something
-         (on-fail))))
+      (fn [config]
+        (if (not (nil? config))
+          ;; we got the stuff; connect
+          (do 
+            (doseq [[k v] config]
+              (a/update! conn k v))
+            (future
+              (try
+                (a/connect! conn (:server config) (:port config))
+                ;; NB if we get here, we should be connected
+                ;; TODO request metar for the facility
+                (catch Exception e
+                  (println "Unable to connect" e)
+                  (on-fail)
+                  (s/alert (str "Unable to connect:\n"
+                                (.getMessage e))
+                           :type :error)))))
+          ;; they canceled or something
+          (on-fail)))))
   (connected?
     [this]
     (a/connected? conn))
@@ -143,6 +155,20 @@
                       (atis-letter-factory))
                     build-text
                     split-atis))
+    (a/update! conn :lat 0)
+    (a/update! conn :lon 0)
+    (a/update! conn :alt 0)
+    (a/update! conn :vis-range 0)
+    (a/update! conn :facility :atis) ;; TODO ?
+    ;; try to get the actual lat/lon of 
+    ;;  the facility asynchronoulsy
+    (future
+      (when-let [info (get-vor "KLGA" (:id config))]
+        (def found-airport info)
+        (when-let [lat (:lat info)]
+          (a/update! conn :lat (Double/parseDouble lat)))
+        (when-let [lon (:lon info)]
+          (a/update! conn :lon (Double/parseDouble lon)))))
     (->VatsimNetwork
       conn
       profile-atom)))

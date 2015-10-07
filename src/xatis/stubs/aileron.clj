@@ -5,7 +5,9 @@
 
 (defstub connect!
   [conn & _]
-  (swap! conn assoc :connected true))
+  #_(swap! conn assoc :connected true)
+  (Thread/sleep 1000)
+  (throw (Exception. "Stub connection")))
 (defstub connected?
   [conn]
   (get @conn :connected))

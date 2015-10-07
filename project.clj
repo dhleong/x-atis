@@ -11,6 +11,7 @@
                  [org.clojure/data.xml "0.0.8"]
                  [org.clojure/data.zip "0.1.1"]
                  [asfiled "0.1.0-SNAPSHOT"]
+                 [stubby "0.1.0-SNAPSHOT"]
                  [clj-time "0.11.0"]
                  [seesaw "1.4.5"]
                  [de.dfki.mary/marytts-runtime "5.2-SNAPSHOT"]

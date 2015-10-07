@@ -10,7 +10,9 @@
     `config` is a map:
     {:id 'KLGA' :atis-frequency '127.050'
      :voice-server 'rw.liveatc.net'}
-    `voice-atis` is the rendered voice ATIS text.")
+    `voice-atis` is the rendered voice ATIS text.
+    If `config` is nil, disconnect the voice
+    atis and revert frequency to 199.998")
   (connected?
     [this]
     "Returns true if we have an active connection 

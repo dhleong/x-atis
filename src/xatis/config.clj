@@ -345,11 +345,28 @@
            :choices (:profiles config)
            :to-string :name))
 
+(defn toggle-atis-connection
+  [e]
+  (let [network (get-network e)
+        f (s/to-root e)
+        btn (s/select f [:#connect-atis])]
+    (if (= "Connect ATIS" (s/text btn))
+      ;; connect it
+      (do
+        (config-voice! network 
+                       (get-config)
+                       (s/value (s/select f [:#preview])))
+        (s/text! btn "Disconnect ATIS"))
+      ;; disconnect it
+      (do
+        (config-voice! network nil nil)
+        (s/text! btn "Connect ATIS")))))
+
 (defn toggle-atis-preview
-  [f]
+  [e]
   (if-let [running @running-preview]
     (swap! running-preview (constantly (.cancel running)))
-    (let [preview (s/value (s/select (s/to-frame f) [:#preview]))]
+    (let [preview (s/value (s/select (s/to-frame e) [:#preview]))]
       (when-not (empty? preview)
         (swap! running-preview 
                (constantly
@@ -444,7 +461,8 @@
                       :items
                       [(s/button :id :connect-atis
                                  :text "Connect ATIS"
-                                 :enabled? false)
+                                 :enabled? false
+                                 [:action toggle-atis-connection])
                        (s/button :id :preview-atis
                                  :text "Preview ATIS"
                                  :enabled? false

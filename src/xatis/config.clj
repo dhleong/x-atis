@@ -22,6 +22,7 @@
 ;; Constants
 ;;
 
+(def wind-format-default "--- @ --")
 (def vrb-wind-format "VRB @ %02d")
 (def wind-format "%03d @ %02d")
 (def zulu-formatter (f/formatter "HHmm/ss"))
@@ -278,15 +279,23 @@
           ;; update the wind
           (b/bind
             (b/transform 
-              #(let [wind (:wind %)]
-                 (if (= :vrb (:speed wind))
+              #(let [wind (:wind %)
+                     speed (:speed wind)]
+                 (cond 
+                   ;; nothing
+                   (or (nil? speed)) wind-format-default
+                   ;; variable wind
+                   (= :vrb (:speed wind))
                    (format vrb-wind-format (:dir wind))
-                   (format wind-format (:speed wind) (:dir wind)))))
+                   ;; normal
+                   :else (format wind-format 
+                           (:dir wind)
+                           (:speed wind)))))
             (b/value (s/select f [:#winds])))
           ;; update altimeter
           (b/bind
             (b/transform
-              #(str "A" (:altimeter %)))
+              #(str "A" (:altimeter % "----")))
             (b/value (s/select f [:#altimeter])))))
       ;; update the preview
       (b/bind
@@ -300,9 +309,9 @@
              (catch Exception e
                (def last-render-exc e))))
         (b/transform (safely build-voice))
-        (b/filter (complement nil?))
-        (b/value (s/select f [:#preview])))
-      (b/property (s/select f [:#preview-atis]) :enabled?)
+        (b/tee
+          (b/value (s/select f [:#preview]))
+          (b/property (s/select f [:#preview-atis]) :enabled?))) 
       (b/b-do 
         [v]
         (swap! (get-metar f) (constantly v))))))
@@ -336,6 +345,7 @@
                (def last-render-exc e))))
         (b/transform (safely build-voice))
         (b/filter (complement nil?))
+        (b/filter (complement empty?))
         (b/value (s/select f [:#preview])))
       (def unfound-widget k)))) ;; FIXME departing-rwys, etc.
 
@@ -418,7 +428,7 @@
                             :editable? false
                             :columns 9
                             :halign :center
-                            :text "--- @ --") "grow,span 3"]
+                            :text wind-format-default) "grow,span 3"]
                    [(s/text :id :altimeter
                             :editable? false
                             :columns 8

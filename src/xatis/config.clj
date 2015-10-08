@@ -462,6 +462,7 @@
                       [(s/button :id :connect-atis
                                  :text "Connect ATIS"
                                  :enabled? false
+                                 :listen
                                  [:action toggle-atis-connection])
                        (s/button :id :preview-atis
                                  :text "Preview ATIS"

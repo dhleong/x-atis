@@ -8,6 +8,27 @@
              [util :refer [typed-dispatch-fn]]
              [voice :refer [render-numbers]] ]))
 
+(defn expand-airports-navaids
+  [text]
+  (-> text
+      (s/replace
+        #"[@*]([A-Z]{3,4}|[A-Z]{3})\b"
+        "$1")))
+
+(defn expand-taxiways
+  [text]
+  (-> text
+      (s/replace 
+        #"%(([A-Z]{1,2})([0-9]*))\b" 
+        "$1")))
+
+(defn expand-numbers
+  [text]
+  (-> text
+      (s/replace
+        #"#([0-9]+)\b" 
+        "$1")))
+
 (defmulti build-part typed-dispatch-fn)
 (defmethod build-part :vector
   [part]
@@ -15,6 +36,8 @@
 (defmethod build-part :default
   [part]
   (-> part
+      expand-taxiways
+      expand-airports-navaids
       (s/replace #"^NOTAMS" "NOTICES TO AIRMEN;")))
 
 (defn build-text

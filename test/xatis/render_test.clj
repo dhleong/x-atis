@@ -41,15 +41,15 @@
 
 (deftest render-runways-test
   (testing "Single runway"
-    (is (= ["LDG RWY " [1]] (render-runways "LDG" "01")))
-    (is (= ["LDG RWY " [1] "L"] (render-runways "LDG" "01L"))))
+    (is (= "LDG RWY 1." (render-runways "LDG" "01")))
+    (is (= "LDG RWY 1L." (render-runways "LDG" "01L"))))
   (testing "Two runways"
-    (is (= ["LDG RWYS " [1] ", AND " [2]]
+    (is (= "LDG RWYS 1, AND 2."
            (render-runways "LDG" "01,02")))
-    (is (= ["LDG RWYS " [1] "L" ", AND " [2]]
+    (is (= "LDG RWYS 1L, AND 2."
            (render-runways "LDG" "01L,02"))))
   (testing "Three runways"
-    (is (= ["LDG RWYS " [1] ", " [2] ", AND " [3]]
+    (is (= "LDG RWYS 1, 2, AND 3."
            (render-runways "LDG" "01,02,03")))))
 
 (deftest render-test
@@ -80,10 +80,8 @@
                   (render-atis config {:arriving-rwys "04"
                                        :departing-rwys "11"}
                                metar "a"))]
-      (is (= "LDG RWY " (nth parts 0)))
-      (is (= [4] (nth parts 1)))
-      (is (= "DEPTG RWY " (nth parts 2)))
-      (is (= [1 1] (nth parts 3)))))
+      (is (= "LDG RWY 4." (nth parts 0)))
+      (is (= "DEPTG RWY 11." (nth parts 1)))))
   (testing "Hazardous Weather"
     (let [parts (:parts
                    (render-atis config 

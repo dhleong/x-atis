@@ -126,33 +126,45 @@
 (deftab tab-dep-arr
   "Departure/Arrival"
   (mig-panel
-    :constraints ["wrap 3"]
+    :constraints ["wrap 6"]
     :items
-    [[(s/text :id :dep-arr-notice
+    [
+     [(s/text :id :dep-arr-notice
               :margin 4
               :multi-line? true
               :wrap-lines? true
               :rows 5)
-      "grow,span 4 3,pushy"]
+      "grow,span 6 3,pushy"]
+     ;
+     [(mig-panel
+        :constraints ["wrap 6,insets 0"]
+        :items
+        [["ARR RWYS:" "grow,span 1"]
+         [(s/text :id :arriving-rwys) "grow,pushx,span 2"]
+         ["DEP RWYS:" "grow,span 1"]
+         [(s/text :id :departing-rwys) "grow,pushx,span 2"]])
+      "grow,span 6 1,pad 0"]
+     ;
      [(s/checkbox :id :ils-approach
                   :text "ILS approaches in use")
-      "grow"]
+      "grow,pushx,span 2"]
      [(s/checkbox :id :rnav-approach
                   :text "RNAV approaches in use")
-      "grow"]
+      "grow,pushx,span 2"]
      [(s/checkbox :id :vor-approach
                   :text "VOR approaches in use")
-      "grow"]
+      "grow,pushx,span 2"]
      ;
      [(s/checkbox :id :visual-approach
                   :text "Visual approaches in use")
-      "grow"]
+      "grow,pushx,span 2"]
      [(s/checkbox :id :localize-approach
                   :text "Localizer approaches in use")
-      "grow"]
+      "grow,pushx,span 2"]
      [(s/checkbox :id :dme-approach
                   :text "DME approaches in use")
-      "grow"]]))
+      "grow,pushx,span 2"]
+    ]))
 
 (deftab tab-dep-arr-flags
   "Dep/Arr Flags"

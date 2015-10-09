@@ -161,7 +161,26 @@
              "NOTICES TO AIRMEN: BOGUS NOTICE. "
              "READBACK ALL RUNWAY HOLD SHORT INSTRUCTIONS. "
              "Advise on initial contact you have information Alpha.")
-           (build-voice rendered-atis)))))
+           (build-voice rendered-atis))))
+  (testing "Runways"
+    (is (= (str
+             "LaGuardia Airport Information Alpha. "
+             "ONE TWO FIVE ONE ZULU. "
+             "WIND ZERO NINER ZERO AT FIVE GUSTS ONE ZERO. "
+             "VISIBILITY ONE ZERO. "
+             "CEILING NINER THOUSAND BROKEN. ONE FOUR THOUSAND BROKEN. "
+             "TWO FIVE THOUSAND BROKEN. "
+             "TEMPERATURE TWO SIX, DEWPOINT ONE NINER. "
+             "ALTIMETER THREE ZERO ZERO THREE. "
+             "LANDING RUNWAYS FOUR, AND TWO TWO. "
+             "DEPARTING RUNWAY ONE THREE LEFT. "
+             "Advise on initial contact you have information Alpha.")
+           (build-voice 
+             (r/render-atis
+               rt/config 
+               {:arriving-rwys "04,22"
+                :departing-rwys "13L"}
+               rt/metar "a"))))))
 
 (deftest voice-weather-tests
   (testing "No Ceiling"

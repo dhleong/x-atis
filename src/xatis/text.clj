@@ -30,7 +30,7 @@
         "$1")))
 
 (defmulti build-part typed-dispatch-fn)
-(defmethod build-part :vector
+(defmethod build-part :seq
   [part]
   (join part))
 (defmethod build-part :default

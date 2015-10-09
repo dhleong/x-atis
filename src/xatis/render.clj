@@ -36,20 +36,23 @@
                "RWY"
                "RWYS")
         last-rwy (last runways)]
-    (cons
-      (str label " " rwy-or-rwys " ") 
-      (rest ;; drop the redundant first separator
-        (mapcat
-          (fn [rwy]
-            (let [n (s/replace rwy #"[^0-9]" "")
-                  extra (.replace rwy n "")
-                  sep (if (= rwy last-rwy)
-                        ", AND "
-                        ", ")]
-              (if (.isEmpty extra)
-                [sep (read-number n)]
-                [sep (read-number n) extra])))
-          runways)))))
+    (str 
+      (join
+        (cons
+          (str label " " rwy-or-rwys " ") 
+          (rest ;; drop the redundant first separator
+                (mapcat
+                  (fn [rwy]
+                    (let [n (s/replace rwy #"[^0-9]" "")
+                          extra (.replace rwy n "")
+                          sep (if (= rwy last-rwy)
+                                ", AND "
+                                ", ")]
+                      (if (.isEmpty extra)
+                        [sep (join (read-number n))]
+                        [sep (join (read-number n)) extra])))
+                  runways))))
+      ".")))
 
 (def atis-parts
   (partition

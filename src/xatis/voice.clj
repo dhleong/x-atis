@@ -135,6 +135,8 @@
   "Expands strings that are obviously runways
   (such as 22R or 04C)"
   [text]
+  (when (not (string? text))
+    (def last-runs text))
   (->> text
        (re-replace 
          #"\b[0-9]{1,2}[CLR]\b" 
@@ -229,7 +231,7 @@
        upper-case))
 
 (defmulti build-part typed-dispatch-fn)
-(defmethod build-part :vector
+(defmethod build-part :seq
   [part]
   (expand-abbrs (join part)))
 (defmethod build-part :default
@@ -243,7 +245,7 @@
       expand-numbers))
 
 (defmulti build-rvr typed-dispatch-fn)
-(defmethod build-rvr :vector
+(defmethod build-rvr :seq
   [rvrs]
   (->> rvrs
        (map build-rvr)

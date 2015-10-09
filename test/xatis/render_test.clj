@@ -50,7 +50,10 @@
            (render-runways "LDG" "01L,02"))))
   (testing "Three runways"
     (is (= "LDG RWYS 1, 2, AND 3."
-           (render-runways "LDG" "01,02,03")))))
+           (render-runways "LDG" "01,02,03"))))
+  (testing "Weird separators"
+    (is (= "LDG RWYS 1, 2, 3, AND 4."
+           (render-runways "LDG" "01:02;|03 04")))))
 
 (deftest render-test
   (testing "Basic render to array"

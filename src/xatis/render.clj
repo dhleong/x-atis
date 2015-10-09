@@ -31,7 +31,7 @@
 
 (defn render-runways
   [label config]
-  (let [runways (split config #"[, :|;]")
+  (let [runways (split config #"[, :|;]+")
         rwy-or-rwys (if (= 1 (count runways))
                "RWY"
                "RWYS")

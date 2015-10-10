@@ -1,7 +1,10 @@
 (ns ^{:author "Daniel Leong"
       :doc "Vatsim network implementation"}
   xatis.networks.vatsim
-  (:require [clojure.string :refer [lower-case]]
+  (:require [clojure
+             [edn :as edn]
+             [string :refer [lower-case split]]]
+            [clojure.java.io :refer [file] :as io]
             [seesaw
              [core :as s]
              [mig :refer [mig-panel]]]
@@ -11,7 +14,7 @@
              [render :refer [render-atis]]
              [text :refer [build-text]]
              [ui :refer [when-none-empty-set-enabled]]
-             [util :refer [split-atis]]
+             [util :refer [resolve-file split-atis]]
              [network :refer [XAtisNetwork]]]))
 
 (require-stub aileron.core :as a :else xatis.stubs.aileron)
@@ -19,6 +22,16 @@
 ;;
 ;; Constants
 ;;
+
+(def windows? (-> (System/getProperty "os.name")
+                  (.toLowerCase)
+                  (.contains "windows")))
+
+(def default-settings-file
+  (resolve-file
+    (if windows?
+     "~/xradar.settings.edn"
+     "~/.xradar.settings.edn")))
 
 (def text-value-fields [:full-name :cid :pass])
 
@@ -35,13 +48,44 @@
               "Supervisor"
               "Administrator"])
 
+
 ;;
 ;; Internal util
 ;;
 
+(def param-to-key
+  (comp keyword lower-case))
+
+(defn- read-binding
+  [tag value]
+  (let [parts (split (str tag) #"/")
+        command (first parts)]
+    (when (= "set" command)
+      (let [[_ setting-name] parts
+            setting-key (keyword setting-name)]
+        (when (= :connections setting-key)
+          (let [info (first value)]
+            (assoc info
+                   :full-name (:name info))))))))
+
+(defn load-saved-info
+  []
+  (let [f (file default-settings-file)]
+    (if (.exists f)
+      (with-open [reader (java.io.PushbackReader. (io/reader f))]
+        (loop [result {}]
+          (let [read-val (edn/read {:default read-binding
+                                    :eof :eof} 
+                                   reader)]
+            (cond
+              (= :eof read-val) result
+              (not (nil? read-val)) read-val
+              :else (recur result)))))
+      {})))
+
 (defn prompt-credentials
   [callback]
-  (let [saved-info {}  ;; FIXME
+  (let [saved-info (load-saved-info)
         connected-status (atom false)
         f
         (-> (s/frame
@@ -80,15 +124,16 @@
                              #(let [params-raw (s/value (s/to-root %))
                                     params (assoc params-raw
                                                   :rating
-                                                  (keyword
-                                                    (lower-case 
-                                                      (:rating params-raw))))]
+                                                  (param-to-key 
+                                                    (:rating params-raw)))]
                                 (swap! connected-status (constantly true))
                                 (.dispose (s/to-root %))
                                 (callback params))])
                   "grow"]]))
             s/pack!
             s/show!)]
+    (when-let [rating (:rating saved-info)]
+      (s/selection! (s/select f [:#rating]) rating))
     (when-none-empty-set-enabled
       (s/select f [:#connect])
       text-value-fields)

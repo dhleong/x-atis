@@ -1,6 +1,8 @@
 (ns ^{:author "Daniel Leong"
       :doc "Utils"}
-  xatis.util)
+  xatis.util
+  (:require [clojure.java.io :refer [file]]))
+            
 
 (def atis-text-max-width 64)
 
@@ -31,6 +33,16 @@
 ;;
 ;; Public utils
 ;;
+
+(defn resolve-file
+  [path]
+  (when path
+    (let [home (System/getProperty "user.home")]
+      (-> path
+          (.replace "~" home)
+          (.replace "$HOME" home)
+          (.replace "%USERPROFILE%" home)
+          file))))
 
 (defn re-replace
   "Functional regex processing. `pred` will be called

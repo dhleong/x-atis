@@ -27,6 +27,8 @@
 (def wind-format "%03d @ %02d")
 (def zulu-formatter (f/formatter "HHmm/ss"))
 
+(def atis-box-letters (map (comp str first) nato))
+
 ;; list of keys whose value changes affect the metar
 (def valuable-keys
   (conj (map first atis-parts)
@@ -105,7 +107,7 @@
   []
   (s/combobox 
     :id :atis-letter
-    :model (map (comp str first) nato)))
+    :model atis-box-letters))
 
 (defn zulu-time
   []
@@ -274,59 +276,68 @@
 (defn- handle-metar
   "Bind event handling for METAR updates"
   [f]
-  (b/bind
-    (s/select f [:#metar])
-    (b/transform #(try
-                    (decode-metar %)
-                    % ;; just making sure we CAN
-                    (catch Exception e
-                      (def last-metar-exc e)
-                      nil)))
-    (b/filter (complement nil?))
-    (b/tee
-      ;; everyone who wants it decoded...
-      (b/bind
-        (b/transform decode-metar)
-        (b/tee
-          ;; update the wind
-          (b/bind
-            (b/transform 
-              #(let [wind (:wind %)
-                     speed (:speed wind)]
-                 (cond 
-                   ;; nothing
-                   (or (nil? speed)) wind-format-default
-                   ;; variable wind
-                   (= :vrb (:speed wind))
-                   (format vrb-wind-format (:dir wind))
-                   ;; normal
-                   :else (format wind-format 
-                           (:dir wind)
-                           (:speed wind)))))
-            (b/value (s/select f [:#winds])))
-          ;; update altimeter
-          (b/bind
-            (b/transform
-              #(str "A" (:altimeter % "----")))
-            (b/value (s/select f [:#altimeter])))))
-      ;; update the preview
-      (b/bind
-        (b/transform
-          #(try
-             (render-atis 
-               (get-config f)
-               @(get-profile f)
-               %
-               (s/value (s/select f [:#atis-letter])))
-             (catch Exception e
-               (def last-render-exc e))))
-        (b/transform (safely build-voice))
-        (b/tee
-          (b/value (s/select f [:#preview]))
-          (b/property (s/select f [:#preview-atis]) :enabled?))) 
-      (b/b-do 
-        [v]
-        (swap! (get-metar f) (constantly v))))))
+  (let [preview-widget (s/select f [:#preview])
+        preview-atis-button (s/select f [:#preview-atis])]
+    (b/bind
+      (s/select f [:#metar])
+      (b/transform #(try
+                      (decode-metar %)
+                      % ;; just making sure we CAN
+                      (catch Exception e
+                        (def last-metar-exc e)
+                        nil)))
+      (b/filter (complement nil?))
+      (b/tee
+        ;; everyone who wants it decoded...
+        (b/bind
+          (b/transform decode-metar)
+          (b/tee
+            ;; update the wind
+            (b/bind
+              (b/transform 
+                #(let [wind (:wind %)
+                       speed (:speed wind)]
+                   (cond 
+                     ;; nothing
+                     (or (nil? speed)) wind-format-default
+                     ;; variable wind
+                     (= :vrb (:speed wind))
+                     (format vrb-wind-format (:dir wind))
+                     ;; normal
+                     :else (format wind-format 
+                                   (:dir wind)
+                                   (:speed wind)))))
+              (b/value (s/select f [:#winds])))
+            ;; update altimeter
+            (b/bind
+              (b/transform
+                #(str "A" (:altimeter % "----")))
+              (b/value (s/select f [:#altimeter])))))
+        ;; update the preview
+        (b/bind
+          (b/transform
+            #(try
+               (render-atis 
+                 (get-config f)
+                 @(get-profile f)
+                 %
+                 (s/value (s/select f [:#atis-letter])))
+               (catch Exception e
+                 (def last-render-exc e))))
+          (b/transform (safely build-voice))
+          (b/tee
+            (b/value preview-widget)
+            #_(b/property preview-atis-button :enabled?)
+            (b/b-do
+              [atis-text]
+              ;; for some reason, b/property is deadlocking
+              (def last-foo atis-text)
+              (s/invoke-later
+                (s/config! preview-atis-button 
+                           :enabled? (not (empty? atis-text))))))) 
+        (b/b-do 
+          [v]
+          (swap! (get-metar f) (constantly v)))))))
 
 (defn- handle-values
   [f]
@@ -359,7 +370,20 @@
         (b/filter (complement nil?))
         (b/filter (complement empty?))
         (b/value (s/select f [:#preview])))
-      (def unfound-widget k)))) ;; FIXME departing-rwys, etc.
+      (def unfound-widget k))))
+
+(defn- on-new-atis
+  "Called when the ATIS has changed. We'll prompt to update the
+  ATIS letter."
+  [root]
+  (let [atis-letter-widget (s/select root [:#atis-letter])
+        this-atis (s/value atis-letter-widget)
+        this-index (.indexOf atis-box-letters this-atis)
+        next-atis (nth atis-box-letters (inc this-index))]
+    (s/alert root
+             (str "New ATIS `" next-atis "` Available")
+             :type :info)
+    (s/value! atis-letter-widget next-atis)))
 
 (defn- pick-profile
   [config]
@@ -526,10 +550,17 @@
 (defn update-weather!
   [root raw-metar]
   ;; the bindings will handle everything
-  (let [widget (s/select root [:#metar])]
+  (let [widget (s/select root [:#metar])
+        preview-widget (s/select root [:#preview])
+        old-atis (s/text preview-widget)]
+    ;; FIXME actually, wait to update until we've
+    ;;  ack'd it; changes to metar will currently
+    ;;  update the text preview, as well
     (s/text! widget raw-metar)
     ;; this widget doesn't seem to get updated
-    (s/repaint! widget)))
+    (s/repaint! widget)
+    (when (not= old-atis (s/text preview-widget))
+      (on-new-atis root))))
 
 (defn show-config
   ([config]

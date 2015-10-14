@@ -56,6 +56,9 @@
            (render-runways "LDG" "01:02;|03 04")))))
 
 (deftest render-test
+  (testing "Render nil when no letter is provided"
+    (is (nil? (render-atis config profile metar "")))
+    (is (nil? (render-atis config profile metar nil))))
   (testing "Basic render to array"
     (let [parts (:parts (render-atis config profile metar "a"))]
       (is (= "ILS APPROACHES IN USE." (nth parts 0)))

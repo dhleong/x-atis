@@ -106,7 +106,7 @@
   rendered to text separated by whitespace
   `metar` should be the raw METAR"
   [config profile metar information-letter]
-  (let [letter (first (upper-case information-letter))
+  (let [letter (first (upper-case (str information-letter)))
         decoded (decode-metar metar)
         nato-letter (get nato letter letter)
         mag-add? (:magnetic-add profile)
@@ -117,32 +117,33 @@
                       (catch Exception e
                         0))
         zulu (:time metar)]
-    {:meta
-     (assoc
-       config
-       :info nato-letter
-       :magnetic-add (cond
-                       mag-add? mag-degrees
-                       mag-subtract? (- mag-degrees)
-                       :else 0)
-       :magnetic-variation (:magnetic-variation profile))
-     :metar (subs metar (inc (.indexOf metar " " 5)))
-     :weather decoded
-     :parts
-     (->> atis-parts
-          (mapcat
-            (fn [[k v]] 
-              (let [prof-val (get profile k)]
-                (when (and prof-val
-                           (or (not (string? prof-val))
-                               (not (empty? prof-val))))
-                  (let [parsed 
-                        (cond
-                          (string? v) v
-                          (= identity v) (k profile)
-                          :else (v profile))]
-                    (if (and (seq parsed)
-                             (not (string? parsed)))
-                      parsed
-                      [parsed]))))))
-          (filter identity))}))
+    (when nato-letter
+      {:meta
+       (assoc
+         config
+         :info nato-letter
+         :magnetic-add (cond
+                         mag-add? mag-degrees
+                         mag-subtract? (- mag-degrees)
+                         :else 0)
+         :magnetic-variation (:magnetic-variation profile))
+       :metar (subs metar (inc (.indexOf metar " " 5)))
+       :weather decoded
+       :parts
+       (->> atis-parts
+            (mapcat
+              (fn [[k v]] 
+                (let [prof-val (get profile k)]
+                  (when (and prof-val
+                             (or (not (string? prof-val))
+                                 (not (empty? prof-val))))
+                    (let [parsed 
+                          (cond
+                            (string? v) v
+                            (= identity v) (k profile)
+                            :else (v profile))]
+                      (if (and (seq parsed)
+                               (not (string? parsed)))
+                        parsed
+                        [parsed]))))))
+            (filter identity))})))

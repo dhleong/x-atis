@@ -27,7 +27,9 @@
 (def wind-format "%03d @ %02d")
 (def zulu-formatter (f/formatter "HHmm/ss"))
 
-(def atis-box-letters (map (comp str first) nato))
+(def atis-box-letters (->> nato
+                           (map (comp str first))
+                           (cons "")))
 
 ;; list of keys whose value changes affect the metar
 (def valuable-keys
@@ -380,10 +382,11 @@
         this-atis (s/value atis-letter-widget)
         this-index (.indexOf atis-box-letters this-atis)
         next-atis (nth atis-box-letters (inc this-index))]
-    (s/alert root
-             (str "New ATIS `" next-atis "` Available")
-             :type :info)
-    (s/value! atis-letter-widget next-atis)))
+    (when (not= "" this-atis)
+      (s/alert root
+               (str "New ATIS `" next-atis "` Available")
+               :type :info)
+      (s/value! atis-letter-widget next-atis))))
 
 (defn- pick-profile
   [config]
@@ -552,15 +555,21 @@
   ;; the bindings will handle everything
   (let [widget (s/select root [:#metar])
         preview-widget (s/select root [:#preview])
-        old-atis (s/text preview-widget)]
-    ;; FIXME actually, wait to update until we've
-    ;;  ack'd it; changes to metar will currently
-    ;;  update the text preview, as well
+        safely-build-voice (safely build-voice)
+        old-atis (s/text preview-widget)
+        new-atis (-> (render-atis 
+                        (get-config root)
+                        @(get-profile root)
+                        raw-metar
+                        (s/value (s/select root [:#atis-letter])))
+                     safely-build-voice)]
+    ;; if the atis changed, wait to update 
+    ;;  until we've ack'd it
+    (when (not= old-atis new-atis)
+      (on-new-atis root))
     (s/text! widget raw-metar)
     ;; this widget doesn't seem to get updated
-    (s/repaint! widget)
-    (when (not= old-atis (s/text preview-widget))
-      (on-new-atis root))))
+    (s/repaint! widget)))
 
 (defn show-config
   ([config]

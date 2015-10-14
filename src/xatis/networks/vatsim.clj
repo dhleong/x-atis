@@ -186,7 +186,7 @@
     (a/send! conn cid message)))
 
 (defn create-network
-  [config metar-atom profile-atom atis-letter-factory]
+  [config metar-atom profile-atom on-metar atis-letter-factory]
   (let [conn (a/create-connection
                "xAtis v0.1.0"
                0 1
@@ -214,6 +214,9 @@
           (a/update! conn :lat (Double/parseDouble lat)))
         (when-let [lon (:lon info)]
           (a/update! conn :lon (Double/parseDouble lon)))))
+    ;; listen for metars, and request them
+    (a/listen conn :metars (:id config) on-metar)
+    (a/request-metar (:id config))
     (->VatsimNetwork
       conn
       profile-atom)))

@@ -44,6 +44,7 @@
 (def running-preview (atom nil))
 
 (declare show-config)
+(declare update-weather!)
 
 ;;
 ;; Util
@@ -445,6 +446,7 @@
         profile-atom (atom profile)
         atis-letter-widget (atis-letter-box)
         network (vatsim/create-network config metar-atom profile-atom
+                                       update-weather!
                                        #(s/value atis-letter-widget))
         [zulu-time-widget timer] (zulu-time)
         f (-> (s/frame

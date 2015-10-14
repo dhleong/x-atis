@@ -18,7 +18,10 @@
   [conn]
   (swap! conn assoc :connected false))
 (defstub field)
-(defstub listen)
+(defstub listen
+  [& _])
+(defstub request-metar
+  [& _]) ;; we could provide a response, if we really wanted
 (defstub send!)
 (defstub update!
   [& _]

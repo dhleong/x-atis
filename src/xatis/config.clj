@@ -13,6 +13,7 @@
             [xatis
              [network :refer :all]
              [render :refer [render-atis atis-parts nato]]
+             [subscribe :as subrs]
              [util :refer [re-replace]]
              [tts :refer [preview-speech]]
              [voice :refer [build-part build-voice]]]
@@ -445,9 +446,12 @@
   (let [metar-atom (atom nil)
         profile-atom (atom profile)
         atis-letter-widget (atis-letter-box)
-        network (vatsim/create-network config metar-atom profile-atom
-                                       update-weather!
-                                       #(s/value atis-letter-widget))
+        subrs (subrs/create-subscriptions)
+        network (vatsim/create-network 
+                  config metar-atom profile-atom
+                  subrs
+                  update-weather!
+                  #(s/value atis-letter-widget))
         [zulu-time-widget timer] (zulu-time)
         f (-> (s/frame
                 :title (str "xAtis - " (:facility config))
@@ -545,6 +549,14 @@
     ;; when the metar changes, do all the things
     (handle-metar f)
     (handle-values f)
+    ;; when the atis-letter changes, notify subscribers
+    (b/bind
+      atis-letter-widget
+      (b/b-do
+        [v]
+        (when (not (empty? v))
+          (subrs/each-sub subrs
+            (notify-atis! (get-network f) sub v)))))
     (def last-frame f)
     f)) ;; return the frame
 

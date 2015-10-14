@@ -24,6 +24,9 @@
   (disconnect!
     [this]
     "Sever any active connection with the network.")
+  (notify-atis!
+    [this cid atis-letter]
+    "Notify the given subscriber of the change in atis")
   (send-to!
     [this cid message]
     "Send a private message to the provided pilot"))

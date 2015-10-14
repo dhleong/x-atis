@@ -12,6 +12,7 @@
             [stubby.core :refer [require-stub]]
             [xatis
              [render :refer [render-atis]]
+             [subscribe :as subrs]
              [text :refer [build-text]]
              [ui :refer [when-none-empty-set-enabled]]
              [util :refer [resolve-file split-atis]]
@@ -35,6 +36,10 @@
 
 (def text-value-fields [:full-name :cid :pass])
 
+(def notify-atis-fmt "New Atis! Information %s is current.")
+(def notify-subs-fmt "You are now subscribed to ATIS changes.")
+(def notify-unsub-fmt "You are no longer subscribed.")
+
 (def ratings ["Observer"
               "Student1"
               "Student2"
@@ -55,6 +60,18 @@
 
 (def param-to-key
   (comp keyword lower-case))
+
+(defn on-message
+  [subrs msg send-msg!]
+  (let [input (lower-case (:text msg))
+        callsign (:from msg)]
+    (condp #(= 0 (.indexOf %2 %1)) input
+      "sub" (do
+              (subrs/subscribe subrs callsign)
+              (send-msg! callsign notify-subs-fmt))
+      "unsub" (do
+                (subrs/unsubscribe subrs callsign)
+                (send-msg! callsign notify-unsub-fmt)))))
 
 (defn- read-binding
   [tag value]
@@ -181,12 +198,16 @@
   (disconnect!
     [this]
     (a/disconnect! conn))
+  (notify-atis!
+    [this cid atis-letter]
+    (a/send! conn cid (format notify-atis-fmt atis-letter)))
   (send-to!
     [this cid message]
     (a/send! conn cid message)))
 
 (defn create-network
-  [config metar-atom profile-atom on-metar atis-letter-factory]
+  [config metar-atom profile-atom subrs
+   on-metar atis-letter-factory]
   (let [conn (a/create-connection
                "xAtis v0.1.0"
                0 1
@@ -217,6 +238,11 @@
     ;; listen for metars, and request them
     (a/listen conn :metars (:id config) on-metar)
     (a/request-metar (:id config))
+    ;; listen for subscription messages
+    (a/listen conn
+              :messages
+              #(on-message subrs %
+                           (partial a/send! conn)))
     (->VatsimNetwork
       conn
       profile-atom)))

@@ -211,6 +211,8 @@
   (let [conn (a/create-connection
                "xAtis v0.1.0"
                0 1
+               "" "" ;; TODO credentials
+               :atc ;; client-type
                "xAtis connection")]
     (a/update! conn
                :atis-factory
@@ -225,7 +227,7 @@
     (a/update! conn :lon 0)
     (a/update! conn :alt 0)
     (a/update! conn :vis-range 0)
-    (a/update! conn :facility :atis) ;; TODO ?
+    (a/update! conn :facility :tower)
     ;; try to get the actual lat/lon of 
     ;;  the facility asynchronoulsy
     (future

@@ -1,10 +1,13 @@
 (ns xatis.core
   (:require [clojure.java.io :refer [file]]
+            [clojure.tools.nrepl.server :refer [start-server stop-server]]
             [seesaw.core :refer [native!] :as s]
             [xatis
              [config :refer [show-config]]
              [vatis :refer [read-file]]])
   (:gen-class))
+
+(def nrepl-port 7888)
 
 (defn read-profile
   [profile]
@@ -33,6 +36,8 @@
   "I don't do a whole lot ... yet."
   [& args]
   (native!)
+  (defonce nrepl-server (start-server :port nrepl-port))
+  (println "Repl available on" nrepl-port)
   (if (empty? args)
     (pick-profile-file open-config)
     (open-config (file (first args)))))

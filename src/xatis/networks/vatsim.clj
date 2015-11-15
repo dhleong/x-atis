@@ -19,6 +19,9 @@
              [network :refer [XAtisNetwork]]]))
 
 (require-stub aileron.core :as a :else xatis.stubs.aileron)
+(require-stub xatis.networks.vatsim-creds 
+              :as vc 
+              :else xatis.stubs.vatsim-creds)
 
 ;;
 ;; Constants
@@ -27,6 +30,8 @@
 (def windows? (-> (System/getProperty "os.name")
                   (.toLowerCase)
                   (.contains "windows")))
+
+(def vatsim-port 6809)
 
 (def default-settings-file
   (resolve-file
@@ -154,6 +159,10 @@
     (when-none-empty-set-enabled
       (s/select f [:#connect])
       text-value-fields)
+    ;; manually re-set these so the listener is updated
+    (s/value! (s/select f [:#full-name]) (:full-name saved-info))
+    (s/value! (s/select f [:#cid]) (:cid saved-info))
+    (s/value! (s/select f [:#pass]) (:pass saved-info))
     (s/listen 
       f :window-closed (fn [_]
                         (when-not @connected-status
@@ -181,9 +190,12 @@
               (a/update! conn k v))
             (future
               (try
-                (a/connect! conn (:server config) (:port config))
+                (println "Connecting...")
+                (a/connect! conn (:server config) vatsim-port)
+                (println "Connected!")
                 ;; NB if we get here, we should be connected
-                ;; TODO request metar for the facility
+                ;; request metar for the facility
+                (a/request-metar conn (:id config))
                 (catch Exception e
                   (println "Unable to connect" e)
                   (on-fail)
@@ -197,7 +209,8 @@
     (a/connected? conn))
   (disconnect!
     [this]
-    (a/disconnect! conn))
+    (a/disconnect! conn)
+    (println "Disconnected."))
   (notify-atis!
     [this cid atis-letter]
     (a/send! conn cid (format notify-atis-fmt atis-letter)))
@@ -209,9 +222,9 @@
   [config metar-atom profile-atom subrs
    on-metar atis-letter-factory]
   (let [conn (a/create-connection
-               "xAtis v0.1.0"
+               "xAtis - 0.1.0"
                0 1
-               "" "" ;; TODO credentials
+               (vc/client-id) (vc/client-key)
                :atc ;; client-type
                "xAtis connection")]
     (a/update! conn
@@ -223,6 +236,7 @@
                       (atis-letter-factory))
                     build-text
                     split-atis))
+    ; set preliminary coords (we try to fetch them later)
     (a/update! conn :lat 0)
     (a/update! conn :lon 0)
     (a/update! conn :alt 0)
@@ -238,13 +252,18 @@
         (when-let [lon (:lon info)]
           (a/update! conn :lon (Double/parseDouble lon)))))
     ;; listen for metars, and request them
-    (a/listen conn :metars (:id config) on-metar)
-    (a/request-metar (:id config))
+    (a/listen conn :metars on-metar)
+    ;; (a/request-metar conn (:id config))
     ;; listen for subscription messages
     (a/listen conn
               :messages
               #(on-message subrs %
                            (partial a/send! conn)))
+    (a/listen conn
+              :errors
+              #(do
+                 (println %)
+                 (s/alert % :type :error)))
     (->VatsimNetwork
       conn
       profile-atom)))

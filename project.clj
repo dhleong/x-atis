@@ -20,4 +20,5 @@
   :main ^:skip-aot xatis.core
   :target-path "target/%s"
   :jvm-opts ["-Xdock:name=xAtis"] 
-  :profiles {:uberjar {:aot :all}})
+  :profiles {:uberjar {:aot :all}}
+  :resource-paths ["lib/*" "resources"])

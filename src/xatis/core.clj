@@ -7,7 +7,7 @@
              [vatis :refer [read-file]]])
   (:gen-class))
 
-(def nrepl-port 7888)
+(def nrepl-port-file (file ".nrepl-port"))
 
 (defn read-profile
   [profile]
@@ -36,8 +36,9 @@
   "I don't do a whole lot ... yet."
   [& args]
   (native!)
-  (defonce nrepl-server (start-server :port nrepl-port))
-  (println "Repl available on" nrepl-port)
+  (defonce nrepl-server (start-server))
+  (println "Repl available on" (:port nrepl-server))
+  (spit nrepl-port-file (:port nrepl-server))
   (if (empty? args)
     (pick-profile-file open-config)
     (open-config (file (first args)))))

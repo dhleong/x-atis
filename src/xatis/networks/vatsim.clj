@@ -3,7 +3,7 @@
   xatis.networks.vatsim
   (:require [clojure
              [edn :as edn]
-             [string :refer [lower-case split]]]
+             [string :refer [join lower-case split]]]
             [clojure.java.io :refer [file] :as io]
             [seesaw
              [core :as s]
@@ -27,6 +27,9 @@
 ;; Constants
 ;;
 
+; major, minor, tertiary, for laziness
+(def version [0 1 0])
+
 (def windows? (-> (System/getProperty "os.name")
                   (.toLowerCase)
                   (.contains "windows")))
@@ -40,6 +43,7 @@
      "~/.xradar.settings.edn")))
 
 (def text-value-fields [:full-name :cid :pass])
+(def vatsim-keys [:full-name :cid :pass ])
 
 (def notify-atis-fmt "New Atis! Information %s is current.")
 (def notify-subs-fmt "You are now subscribed to ATIS changes.")
@@ -76,7 +80,8 @@
               (send-msg! callsign notify-subs-fmt))
       "unsub" (do
                 (subrs/unsubscribe subrs callsign)
-                (send-msg! callsign notify-unsub-fmt)))))
+                (send-msg! callsign notify-unsub-fmt))
+      nil))) ;; some other message (ignore)
 
 (defn- read-binding
   [tag value]
@@ -144,10 +149,13 @@
                             :listen
                             [:action
                              #(let [params-raw (s/value (s/to-root %))
-                                    params (assoc params-raw
-                                                  :rating
-                                                  (param-to-key 
-                                                    (:rating params-raw)))]
+                                    params (-> params-raw
+                                               (select-keys
+                                                 vatsim-keys)
+                                               (assoc 
+                                                 :rating
+                                                 (param-to-key 
+                                                   (:rating params-raw))))]
                                 (swap! connected-status (constantly true))
                                 (.dispose (s/to-root %))
                                 (callback params))])
@@ -191,12 +199,14 @@
             (future
               (try
                 (println "Connecting...")
-                (a/connect! conn (:server config) vatsim-port)
+                ;; (a/connect! conn (:server config) vatsim-port)
+                (a/connect! conn "fsd.dev.vatsim.net" vatsim-port)
                 (println "Connected!")
                 ;; NB if we get here, we should be connected
-                ;; request metar for the facility
-                (a/request-metar conn (:id config))
-                (catch Exception e
+                ;; TODO request metar for the facility
+                ;;  when we're ready
+                ;; (a/request-metar conn (:id config))
+                (catch Throwable e
                   (println "Unable to connect" e)
                   (on-fail)
                   (s/alert (str "Unable to connect:\n"
@@ -222,11 +232,15 @@
   [config metar-atom profile-atom subrs
    on-metar atis-letter-factory]
   (let [conn (a/create-connection
-               "xAtis - 0.1.0"
-               0 1
+               ; app name:
+               (str "xAtis - " (join "." version))
+               ; major, minor version:
+               (first version) (second version)
+               ; client creds:
                (vc/client-id) (vc/client-key)
                :atc ;; client-type
-               "xAtis connection")]
+               "xAtis connection")
+        callsign (str (:id config) "_ATIS")]
     (a/update! conn
                :atis-factory
                #(-> (render-atis 
@@ -242,6 +256,8 @@
     (a/update! conn :alt 0)
     (a/update! conn :vis-range 0)
     (a/update! conn :facility :tower)
+    (a/update! conn :callsign callsign)
+    (a/update! conn :freq (:frequency config))
     ;; try to get the actual lat/lon of 
     ;;  the facility asynchronoulsy
     (future
@@ -262,7 +278,7 @@
     (a/listen conn
               :errors
               #(do
-                 (println %)
+                 (println "ERROR: " %)
                  (s/alert % :type :error)))
     (->VatsimNetwork
       conn

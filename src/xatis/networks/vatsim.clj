@@ -243,13 +243,17 @@
         callsign (str (:id config) "_ATIS")]
     (a/update! conn
                :atis-factory
-               #(-> (render-atis 
-                      config
-                      @profile-atom
-                      @metar-atom
-                      (atis-letter-factory))
-                    build-text
-                    split-atis))
+               #(try
+                  (-> (render-atis 
+                        config
+                        @profile-atom
+                        @metar-atom
+                        (atis-letter-factory))
+                      build-text
+                      split-atis)
+                  (catch Exception e
+                    (println e)
+                    ["No atis available"])))
     ; set preliminary coords (we try to fetch them later)
     (a/update! conn :lat 0)
     (a/update! conn :lon 0)
